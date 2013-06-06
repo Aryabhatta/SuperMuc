@@ -31,7 +31,7 @@ int main( int argc, char *argv[] )
 
     // algorithmic parameters
     algoparam_t param;
-    int np, i=0,j=0;
+    int np, i=0;
 
     double runtime, flop;
     double residual;
@@ -112,6 +112,7 @@ int main( int argc, char *argv[] )
 
     // Array for MPI sendrecv
     double * buf; 
+    MPI_Request request;
 
     // loop over different resolutions
     while(1) {
@@ -165,23 +166,22 @@ int main( int argc, char *argv[] )
 	    {
 		if( rank == 0)
 		{
-  		   int index = (np-2)/xDim;
+  		   int index = (np/xDim)-1;
 		   // Send buffer
 		   for(  i=1; i< np-1; i++)
 		   {
 			buf[i] = param.u[index*np+ i];
    		   }
 
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &request);
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD,  &request);
 		   
 		   updateu( buf, (np-2), index+1, param.u);
 		}
 		if( rank == 1 )
 		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD, &stat);
-
-  		   int index = (np-2)/xDim * rank + 1;
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD, &request);
+  		   int index = ((np/xDim)-1 * rank) +1;
 
 		   // Update U
 		   updateu( buf, (np-2), index-1, param.u);
@@ -192,25 +192,24 @@ int main( int argc, char *argv[] )
 			buf[i] = param.u[index*np + i];
    		   }
 
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD, &request);
 		
-		   index = (np-2)/xDim * (rank+1);
+		   index = ((np/xDim)-1 * (rank+1));
 
 		   // Send buffer
 		   for(  i=1; i< np-1; i++)
 		   {
 			buf[i] = param.u[index*np + i];
    		   }
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &request);
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD,  &request);
 		
 		   updateu( buf, (np-2), index+1, param.u);
 		}
 		if( rank == 2 )
 		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &stat);
-
-  		   int index = (np-2)/xDim * rank + 1;
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD,  &request);
+  		   int index = ((np/xDim)-1 * rank) +1;
 
 		   // Update U
 		   updateu( buf, (np-2), index-1, param.u);
@@ -221,25 +220,24 @@ int main( int argc, char *argv[] )
 			buf[i] = param.u[index*np +i];
    		   }
 
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &request);
 		
-		   index =  (np-2)/xDim * (rank+1);
+		   index = ((np/xDim)-1 * (rank+1));
 
 		   // Send buffer
 		   for(  i=1; i< np-1; i++)
 		   {
 			buf[i] = param.u[index*np +i];
    		   }
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD, &request);
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD,  &request);
 		
 		   updateu( buf, (np-2), index+1, param.u);
 		}
 		if( rank == 3 )
 		{
-  		   int index = (np-2)/xDim * rank + 1;
-
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &stat);
+  		   int index = (((np/xDim)-1) * rank)+1;
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD,  &request);
 
 		   updateu( buf, (np-2), index-1, param.u);
 		   // Send buffer
@@ -248,13 +246,13 @@ int main( int argc, char *argv[] )
 			buf[i] = param.u[index*np + i];
    		   }
 
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &request);
 		}
 		
 	    }
 	
 	    // for 1 * 4
-/*	    if( xDim == 1 )
+	    if( xDim == 1 )
 	    {
 		if( rank == 0)
 		{
@@ -266,14 +264,14 @@ int main( int argc, char *argv[] )
 			buf[i] = param.u[i*np+ index];
    		   }
 
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &request);
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD,  &request);
 		   
 		   updateucol( buf, (np-2), index+1, param.u);
 		}
 		if( rank == 1 )
 		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD,  &request);
   		   int index = ((np/yDim)-1 * rank) +1;
 
 		   // Update U
@@ -285,7 +283,7 @@ int main( int argc, char *argv[] )
 			buf[i] = param.u[i*np + index];
    		   }
 
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD,&request);
 		
 		   index = ((np/yDim)-1 * (rank+1));
 
@@ -294,14 +292,14 @@ int main( int argc, char *argv[] )
 		   {
 			buf[i] = param.u[i*np + index];
    		   }
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD,&request);
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD,  &request);
 		
 		   updateucol( buf, (np-2), index+1, param.u);
 		}
 		if( rank == 2 )
 		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD,  &request);
   		   int index = ((np/yDim)-1 * rank) +1;
 
 		   // Update U
@@ -313,7 +311,7 @@ int main( int argc, char *argv[] )
 			buf[i] = param.u[i*np +index];
    		   }
 
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &request);
 		
 		   index = ((np/yDim)-1 * (rank+1));
 
@@ -322,15 +320,15 @@ int main( int argc, char *argv[] )
 		   {
 			buf[i] = param.u[i*np +index];
    		   }
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD,&request);
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD,  &request);
 		
 		   updateucol( buf, (np-2), index+1, param.u);
 		}
 		if( rank == 3 )
 		{
   		   int index = (((np/yDim)-1) * rank)+1;
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Irecv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD,  &request);
 
 		   updateucol( buf, (np-2), index-1, param.u);
 		   // Send buffer
@@ -339,10 +337,10 @@ int main( int argc, char *argv[] )
 			buf[i] = param.u[i*np + index];
    		   }
 
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD);
+		   MPI_Isend( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &request);
 		}		
 	    }
-*/
+
 	    iter++;
 
 	    // solution good enough ?
@@ -353,7 +351,8 @@ int main( int argc, char *argv[] )
 	    
 	    if (iter % 100 == 0)
 		fprintf(stderr, "residual %f, %d iterations\n", residual, iter);
-	}
+
+	}// Maxiteration 50
 
 	// Flop count after <i> iterations
 	//flop = iter * 11.0 * param.act_res * param.act_res;
@@ -367,16 +366,16 @@ int main( int argc, char *argv[] )
 	if(rank==0)
 	{
 		double buffer;
-		MPI_Recv(&buffer,1, MPI_DOUBLE,1, 10, MPI_COMM_WORLD, &stat);
+		MPI_Irecv(&buffer,1, MPI_DOUBLE,1, 10, MPI_COMM_WORLD,  &request);
 		residual += buffer;
-		MPI_Recv(&buffer,1, MPI_DOUBLE,2, 10, MPI_COMM_WORLD, &stat);
+		MPI_Irecv(&buffer,1, MPI_DOUBLE,2, 10, MPI_COMM_WORLD,  &request);
 		residual += buffer;
-		MPI_Recv(&buffer,1, MPI_DOUBLE,3, 10, MPI_COMM_WORLD, &stat);
+		MPI_Irecv(&buffer,1, MPI_DOUBLE,3, 10, MPI_COMM_WORLD,  &request);
 		residual += buffer;
 	}
 	if(rank==1 || rank==2 || rank ==3 )
 	{
-		MPI_Send(&residual,1, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD);
+		MPI_Isend(&residual,1, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD, &request);
 	}
 
 	if(rank==0)
@@ -395,93 +394,15 @@ int main( int argc, char *argv[] )
 
 	if (param.act_res + param.res_step_size > param.max_res) 
 	{
-		printf("\n Rank %d exits...@resolution=%d", rank, param.act_res);
+		printf("\n Rank %d exits...", rank);
 		break;
 	}
 	param.act_res += param.res_step_size;
     }
 
-    double * upart = 0;
-    int upartSz = (np-2)/NumTask  * (np-2);
-    upart = (double *) malloc(sizeof(double) * upartSz);
-    int xStart=0, yStart=0, xEnd=0, yEnd= 0;
-
-    if( yDim == 1 )
-    {
-      if( rank != 0 )
-      {	     
-        xStart =  (np-2)/xDim * rank + 1;
-     	xEnd = (np-2)/xDim * (rank+1);
-     	yStart = 1;
-    	yEnd = np-2;  	
-
-    	// copy
-    	for( i=xStart; i<=xEnd; i++ )
-    	{
-           for( j=yStart; j<=yEnd; j++ )
-           {
-		upart[(i-xStart)*(np-2)+(j-yStart)] = param.u[i*np+j];
-           }
-        }
-
-	MPI_Send(upart,upartSz, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD );
-     }
-     if( rank == 0 )
-     {
-
-       // Receive from 1
-       MPI_Recv(upart, upartSz, MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &stat);
-
-	xStart =  (np-2)/xDim * 1 + 1; 
-     	xEnd = (np-2)/xDim * (1+1);    
-     	yStart = 1;
-    	yEnd = np-2;  	
-
-    	// copy
-    	for( i=xStart; i<=xEnd; i++ )
-    	{
-           for( j=yStart; j<=yEnd; j++ )
-           {
-        	param.u[i*np+j] = upart[(i-xStart)*(np-2)+(j-yStart)];
-           }
-        }
-
-       // Receive from 2
-       MPI_Recv(upart, upartSz, MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &stat);
-
-	xStart =  (np-2)/xDim * 2 + 1;  
-     	xEnd = (np-2)/xDim * (2+1);	  // 75
-
-    	// copy
-    	for( i=xStart; i<=xEnd; i++ )
-    	{
-           for( j=yStart; j<=yEnd; j++ )
-           {
-        	param.u[i*np+j] = upart[(i-xStart)*(np-2)+(j-yStart)];
-           }
-        }
-
-       // Receive from 3
-       MPI_Recv(upart, upartSz, MPI_DOUBLE, 3, 10, MPI_COMM_WORLD, &stat);
-
-	xStart =  (np-2)/xDim * 3 + 1; // 76
-     	xEnd = (np-2)/xDim * (3+1);	 // 100	
-
-    	// copy
-    	for( i=xStart; i<=xEnd; i++ )
-    	{
-           for( j=yStart; j<=yEnd; j++ )
-           {
-        	param.u[i*np+j] = upart[(i-xStart)*(np-2)+(j-yStart)];
-           }
-        }
-     }// else closes
-   }
-    free(upart);
-    
     MPI_Finalize();
-    
-    if( rank == 0 )
+
+    if( rank == 0)
     {
     coarsen( param.u, np, np,
 	     param.uvis, param.visres+2, param.visres+2 );
@@ -490,6 +411,7 @@ int main( int argc, char *argv[] )
 		 param.visres+2, 
 		 param.visres+2 );
     }
+
     finalize( &param );
 
     totaltime = wtime() - totaltime;
