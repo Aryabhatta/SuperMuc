@@ -54,10 +54,11 @@ double relax_jacobi( double **u, double **utmp,
      yStart = 1;
      yEnd = sizex-2;
    }
-   if( xDim == 1 )
+ 
+  if( xDim == 1 )
    {
-     yStart =  ((sizex/yDim)-1) * rank + 1;
-     yEnd = ((sizex/yDim)-1) * (rank+1);
+     yStart =  (sizex-2)/yDim * rank + 1;
+     yEnd = (sizex-2)/yDim * (rank+1);
      xStart = 1;
      xEnd = sizey-2;
    }
