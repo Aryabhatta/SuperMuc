@@ -79,19 +79,19 @@ double relax_jacobi( double **u, double **utmp,
         yStart = (sizex-2)/yDim * rank + 1;
         yEnd = (sizex-2)/yDim * (rank+1);
       }
-      else if( rank == 2 )
-      {
-        xStart = (sizey-2)/xDim * (rank-1) + 1;
-        xEnd = (sizey-2)/xDim * (rank);
-        yStart = (sizex-2)/yDim * (rank-1) + 1;
-        yEnd = (sizex-2)/yDim * (rank);
-      }
-      else if( rank == 3)
+      else if( rank == 3 )
       {
         xStart = (sizey-2)/xDim * (rank-2) + 1;
         xEnd = (sizey-2)/xDim * (rank-1);
-        yStart = (sizex-2)/yDim * (rank-3) + 1;
-        yEnd = (sizex-2)/yDim * (rank-2);
+        yStart = (sizex-2)/yDim * (rank-2) + 1;
+        yEnd = (sizex-2)/yDim * (rank-1);
+      }
+      else if( rank == 2)
+      {
+        xStart = (sizey-2)/xDim * (rank-1) + 1;
+        xEnd = (sizey-2)/xDim * (rank);
+        yStart = (sizex-2)/yDim * (rank-2) + 1;
+        yEnd = (sizex-2)/yDim * (rank-1);
       }
     }
 
