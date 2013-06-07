@@ -63,7 +63,40 @@ double relax_jacobi( double **u, double **utmp,
      xEnd = sizey-2;
    }
    
-//    printf("\nXstart=%d, xend = %d, ystart=%d, yend= %d\n", xStart, xEnd, yStart, yEnd); 
+    if(xDim == 2 && yDim == 2 )
+    {
+      if( rank == 0 )
+      {
+        xStart = (sizey-2)/xDim * rank + 1;
+        xEnd = (sizey-2)/xDim * (rank+1);
+        yStart = (sizex-2)/yDim * rank + 1;
+        yEnd = (sizex-2)/yDim * (rank+1);
+      }
+      else if( rank == 1)
+      {
+        xStart = (sizey-2)/xDim * (rank-1) + 1;
+        xEnd = (sizey-2)/xDim * rank;
+        yStart = (sizex-2)/yDim * rank + 1;
+        yEnd = (sizex-2)/yDim * (rank+1);
+      }
+      else if( rank == 2 )
+      {
+        xStart = (sizey-2)/xDim * (rank-1) + 1;
+        xEnd = (sizey-2)/xDim * (rank);
+        yStart = (sizex-2)/yDim * (rank-1) + 1;
+        yEnd = (sizex-2)/yDim * (rank);
+      }
+      else if( rank == 3)
+      {
+        xStart = (sizey-2)/xDim * (rank-2) + 1;
+        xEnd = (sizey-2)/xDim * (rank-1);
+        yStart = (sizex-2)/yDim * (rank-3) + 1;
+        yEnd = (sizex-2)/yDim * (rank-2);
+      }
+    }
+
+//    printf("\nRaink = %d, Xstart=%d, xend = %d, ystart=%d, yend= %d\n",rank, xStart, xEnd, yStart, yEnd);
+
     // relaxation
     for( i=xStart; i<=xEnd; i++ )
     {
@@ -80,11 +113,12 @@ double relax_jacobi( double **u, double **utmp,
         }
     }
 
+
 /*
     // relaxation
-    for( i=3*sizey/4; i<sizey-1; i++ )
+    for( i=1; i<=((sizex-2)/2); i++ )
     {
-        for( j=1; j<sizex-1; j++ )
+        for( j=1; j<=((sizey-2)/2); j++ )
         {
             *(*utmp + (i*sizex+j))= 0.25 * (
                                      *(*u + (i*sizex+(j-1)) ) +  // left

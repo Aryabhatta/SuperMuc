@@ -13,4 +13,4 @@
 #@ queue
 . /etc/profile
 cd ~/MPI
-mpiexec -n 4 ./heat test_review.dat 1 4
+mpiexec -n 4 ./heat test.dat 2 2
