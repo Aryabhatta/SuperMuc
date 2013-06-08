@@ -64,7 +64,6 @@ int main( int argc, char *argv[] )
 	return 1;
     }
   
-
     // check result file
     resfilename= (argc>=5) ? argv[4]:"heat.ppm";
 
@@ -95,7 +94,9 @@ int main( int argc, char *argv[] )
     
     MPI_Status stat;
     MPI_Comm comm;
-    int dims[2] = {2,2};
+    int dims[2];// = {2,2};
+    dims[0] = xDim;
+    dims[1] = yDim;
     int periods[2]={0, 0};
     bool reorder = false;
 
@@ -103,9 +104,6 @@ int main( int argc, char *argv[] )
 
     MPI_Comm_size( MPI_COMM_WORLD, &NumTask );
     MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-    
-
-//    foo( comm );
 
     // check input
     if( !read_input(infile, &param) )
@@ -155,6 +153,8 @@ int main( int argc, char *argv[] )
 	iter = 0;
 	while(1) {
 
+	    commBoundary( xDim, yDim, rank, np, param.u, comm);
+
 	switch( param.algorithm ) {
 
         case 0: // JACOBI
@@ -174,7 +174,6 @@ int main( int argc, char *argv[] )
 	    // Synchronise
 	    MPI_Barrier(MPI_COMM_WORLD);
 
-	    commBoundary( xDim, yDim, rank, np, param.u, comm);
 
 	    iter++;
 
@@ -556,8 +555,6 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
     int Urank,Lrank,Drank,Rrank;
 
 	MPI_Status stat;
-  //  MPI_Comm_size( comm, &size );
-//    MPI_Comm_rank( comm, &rank );
     MPI_Cart_coords( comm, rank, 2, coordinates);
     MPI_Cart_shift( comm, 1, -1, &Rrank, &Lrank);
     MPI_Cart_shift( comm, 0, -1, &Drank, &Urank );
@@ -566,7 +563,7 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
 	int i=0, j=0;
 
     // boundary communication
-    if( yDim == 1 )
+    if( yDim == 1 ) // config 4 * 1
 	    {
 	// Array for MPI sendrecv
 	double * buf; 
@@ -580,14 +577,14 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
 			buf[i-1] = u[index*np+ i];
    		   }
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &stat);		   
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Drank, 10, MPI_COMM_WORLD);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Drank, 10, MPI_COMM_WORLD, &stat);		   
 //		   printf("\nRank %d receives row %d", rank, index+1);
 		   updateu( buf, (np-2), index+1, u,1, np);
 		}
 		if( rank == 1 )
 		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Urank, 10, MPI_COMM_WORLD, &stat);
   		   int index = (np-2)/xDim * rank + 1;
 
 //		   printf("\nRank %d receives row %d", rank, index-1);
@@ -601,7 +598,7 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
    		   }
 
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD);
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Urank, 10, MPI_COMM_WORLD);
 		
 		   index = (np-2)/xDim * (rank+1);
 
@@ -611,14 +608,14 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
 			buf[i-1] = u[index*np + i];
    		   }
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &stat);		
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Drank, 10, MPI_COMM_WORLD);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Drank, 10, MPI_COMM_WORLD, &stat);		
 //		   printf("\nRank %d receives row %d", rank, index+1);
 		   updateu( buf, (np-2), index+1, u,1, np);
 		}
 		if( rank == 2 )
 		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Urank, 10, MPI_COMM_WORLD, &stat);
 
   		   int index = (np-2)/xDim * rank + 1;
 
@@ -633,7 +630,7 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
    		   }
 
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD);
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Urank, 10, MPI_COMM_WORLD);
 		
 		   index =  (np-2)/xDim * (rank+1);
 
@@ -643,8 +640,8 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
 			buf[i-1] = u[index*np +i];
    		   }
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Drank, 10, MPI_COMM_WORLD);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Drank, 10, MPI_COMM_WORLD, &stat);
 		
 //		   printf("\nRank %d receives row %d", rank, index+1);
 		   updateu( buf, (np-2), index+1, u,1, np);
@@ -653,7 +650,7 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
 		{
   		   int index = (np-2)/xDim * rank + 1;
 
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Urank, 10, MPI_COMM_WORLD, &stat);
 
 //		   printf("\nRank %d receives row %d", rank, index-1);
 		   updateu( buf, (np-2), index-1, u,1, np);
@@ -664,7 +661,7 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
    		   }
 
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD);
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Urank, 10, MPI_COMM_WORLD);
 		}
 		
     free(buf);
@@ -687,14 +684,14 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
    		   }
 
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &stat);		   
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Rrank, 10, MPI_COMM_WORLD);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Rrank, 10, MPI_COMM_WORLD, &stat);		   
 //		   printf("\nRank %d receives row %d", rank, index+1);
 		   updateucol( buf, (np-2), index+1, u,1, np);
 		}
 		if( rank == 1 )
 		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Lrank, 10, MPI_COMM_WORLD, &stat);
   		   int index = (np-2)/yDim * rank + 1;
 
 //		   printf("\nRank %d receives row %d", rank, index-1);
@@ -708,7 +705,7 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
    		   }
 
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 0, 10, MPI_COMM_WORLD);
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Lrank, 10, MPI_COMM_WORLD);
 		
 		   index = (np-2)/yDim * (rank+1);
 
@@ -718,14 +715,14 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
 			buf[i-1] = u[i*np + index];
    		   }
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &stat);		
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Rrank, 10, MPI_COMM_WORLD);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Rrank, 10, MPI_COMM_WORLD, &stat);		
 //		   printf("\nRank %d receives row %d", rank, index+1);
 		   updateucol( buf, (np-2), index+1, u,1, np);
 		}
 		if( rank == 2 )
 		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Lrank, 10, MPI_COMM_WORLD, &stat);
 
   		   int index = (np-2)/yDim * rank + 1;
 
@@ -740,7 +737,7 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
    		   }
 
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 1, 10, MPI_COMM_WORLD);
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Lrank, 10, MPI_COMM_WORLD);
 		
 		   index =  (np-2)/yDim * (rank+1);
 
@@ -750,8 +747,8 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
 			buf[i-1] = u[i*np +index];
    		   }
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 3, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Rrank, 10, MPI_COMM_WORLD);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Rrank, 10, MPI_COMM_WORLD, &stat);
 		
 //		   printf("\nRank %d receives row %d", rank, index+1);
 		   updateucol( buf, (np-2), index+1, u,1, np);
@@ -760,7 +757,7 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
 		{
   		   int index = (np-2)/yDim * rank + 1;
 
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &stat);
+		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Lrank, 10, MPI_COMM_WORLD, &stat);
 
 //		   printf("\nRank %d receives row %d", rank, index-1);
 		   updateucol( buf, (np-2), index-1, u,1, np);
@@ -771,7 +768,7 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
    		   }
 
 //		   printf("\nRank %d sends row %d", rank, index);
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, 2, 10, MPI_COMM_WORLD);
+		   MPI_Send( buf, (np-2), MPI_DOUBLE, Lrank, 10, MPI_COMM_WORLD);
 		}
 		
     free(buf);
