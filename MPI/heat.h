@@ -68,4 +68,9 @@ double residual_jacobi( double *u,
 double relax_jacobi( double **u, double **utmp,
 		   unsigned sizex, unsigned sizey, int xDim, int yDim, int rank); 
 
+double relax_jacobiInner( double **u, double **utmp,
+		   unsigned sizex, unsigned sizey, int xDim, int yDim, int rank); 
+
+double relax_jacobiBoundary( double **u, double **utmp,
+		   unsigned sizex, unsigned sizey, int xDim, int yDim, int rank); 
 #endif // JACOBI_H_INCLUDED
