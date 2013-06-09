@@ -54,8 +54,15 @@ int coarsen(double *uold, unsigned oldx, unsigned oldy ,
 // Gauss-Seidel: relax_gauss.c
 double residual_gauss( double *u, double *utmp,
 		       unsigned sizex, unsigned sizey );
-void relax_gauss( double *u, 
-		  unsigned sizex, unsigned sizey  );
+//void relax_gauss( double *u, 
+//		  unsigned sizex, unsigned sizey  );
+
+double relax_gauss( double *u, 
+		  unsigned sizex, unsigned sizey, int xDim, int yDim, int rank  );
+double relax_gaussInner( double *u, 
+		  unsigned sizex, unsigned sizey, int xDim, int yDim, int rank  );
+double relax_gaussBoundary( double *u, 
+		  unsigned sizex, unsigned sizey, int xDim, int yDim, int rank  );
 
 // Jacobi: relax_jacobi.c
 double residual_jacobi( double *u,

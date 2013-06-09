@@ -191,9 +191,13 @@ int main( int argc, char *argv[] )
 		    break;
 
 	case 1: // GAUSS
+#if BLOCK
+		    residual = relax_gauss(param.u, np, np, xDim, yDim, rank);
+#endif
 
-		    relax_gauss(param.u, np, np);
-		    residual = residual_gauss( param.u, param.uhelp, np, np);
+#if BLOCK == 0
+		    residual = relax_gaussInner(param.u, np, np, xDim, yDim, rank);
+#endif
 		    break;
 	    }
 #if BLOCK
@@ -216,10 +220,20 @@ int main( int argc, char *argv[] )
 #if BLOCK == 0
     //check for boundary
     updateBoundary( xDim, yDim, rank, np, param.u, buf1, &request1, buf2, &request2);
-    // relax boundary
-	residual += relax_jacobiBoundary(&param.u, &param.uhelp, np, np, \
+
+    if( param.algorithm == 0)
+    {
+        // relax boundary
+	    residual += relax_jacobiBoundary(&param.u, &param.uhelp, np, np, \
                    xDim, yDim, rank);
+    }
+    if( param.algorithm == 1 )
+    {
+        // relax boundary
+	    residual += relax_gaussBoundary(param.u, np, np,xDim, yDim, rank);
+    }
 #endif
+
 	}
 
 	// stopping time
