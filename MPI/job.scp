@@ -14,4 +14,3 @@
 . /etc/profile
 cd ~/MPI
 mpiexec -n 4 ./heat test_review.dat 2 2
-
