@@ -64,7 +64,6 @@ double relax_gauss( double *u,
 
    int xStart, xEnd, yStart, yEnd;
 
-//printf("\nsizey=%d, xDim = %d, rank = %d\n", sizey, xDim, rank);
    if( yDim == 1 )
    {
      xStart =  ((sizey-2)/xDim) * rank + 1;
@@ -112,6 +111,7 @@ double relax_gauss( double *u,
       }
     }
 
+    // Red Black approach
     if( red == 0 )
     {
         for( i=xStart; i<=xEnd; i++ )
@@ -134,7 +134,8 @@ double relax_gauss( double *u,
     }
 
     red = 1;
-
+    
+    // Red Black approach
     if( red == 1 )
     {
         for( i=xStart; i<=xEnd; i++ )
