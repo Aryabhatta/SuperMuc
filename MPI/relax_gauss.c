@@ -6,7 +6,6 @@
  */
 
 #include "heat.h"
-#include <omp.h>
 
 /*
  * Residual (length of error vector)
@@ -58,7 +57,7 @@ double residual_gauss( double *u, double *utmp,
 double relax_gauss( double *u, 
 		  unsigned sizex, unsigned sizey, int xDim, int yDim, int rank )
 {
-    unsigned i, j;
+    int i, j;
     int red = 0;  
     double uold, diff, sum=0.0;
 
@@ -79,9 +78,19 @@ double relax_gauss( double *u,
      xStart = 1;
      xEnd = sizey-2;
    }
-    if(xDim == 2 && yDim == 2 )
+    if(xDim == yDim ) // topology p*p
     {
-      if( rank == 0 )
+        int stepX = (sizey-2)/xDim;
+
+        xStart = stepX * (rank/yDim) + 1;
+        xEnd = stepX * ( (rank/yDim) + 1 );
+
+        int stepY = (sizex-2)/yDim;
+
+        yStart = stepY * (rank % xDim) + 1;
+        yEnd = stepY * ( (rank % xDim)+1);
+
+/*      if( rank == 0 )
       {
         xStart = (sizey-2)/xDim * rank + 1;
         xEnd = (sizey-2)/xDim * (rank+1);
@@ -108,7 +117,7 @@ double relax_gauss( double *u,
         xEnd = (sizey-2)/xDim * (rank);
         yStart = (sizex-2)/yDim * (rank-2) + 1;
         yEnd = (sizex-2)/yDim * (rank-1);
-      }
+      }*/
     }
 
     // Red Black approach
@@ -122,9 +131,9 @@ double relax_gauss( double *u,
                 {
                   uold = u[i*sizex+j];
 	              u[i*sizex+j]= 0.25 * (u[ i*sizex     + (j-1) ]+
-			          	    u[ i*sizex     + (j+1) ]+
-				            u[ (i-1)*sizex + j     ]+
-    				        u[ (i+1)*sizex + j     ]);
+            			          	    u[ i*sizex     + (j+1) ]+
+			            	            u[ (i-1)*sizex + j     ]+
+    				                    u[ (i+1)*sizex + j     ]);
 
 	              diff = u[i*sizex + j] - uold;
                   sum += diff * diff; 
@@ -165,8 +174,8 @@ double relax_gaussInner( double *u,
     unsigned i, j;
     int red = 0;  
     double uold, diff, sum=0.0;
-
    int xStart, xEnd, yStart, yEnd;
+
    if( yDim == 1 )
    {
      xStart =  ((sizey-2)/xDim) * rank + 2;
@@ -182,9 +191,25 @@ double relax_gaussInner( double *u,
      xStart = 1;
      xEnd = sizey-2;
    }
-    if(xDim == 2 && yDim == 2 )
-    {
-      if( rank == 0 )
+   if(xDim == yDim ) //topology p*p
+   {
+        int stepX = (sizey-2)/xDim;
+
+        xStart = stepX * (rank/yDim) + 1;
+        xEnd = stepX * ( (rank/yDim) + 1 );
+
+        int stepY = (sizex-2)/yDim;
+
+        yStart = stepY * (rank % xDim) + 1;
+        yEnd = stepY * ( (rank % xDim)+1);
+
+        // since inner 
+        xStart = xStart + 1;
+        xEnd = xEnd - 1;
+        yStart = yStart + 1;
+        yEnd = yEnd - 1;
+
+/*      if( rank == 0 )
       {
         xStart = (sizey-2)/xDim * rank + 2;
         xEnd = (sizey-2)/xDim * (rank+1)-1;
@@ -212,7 +237,8 @@ double relax_gaussInner( double *u,
         yStart = (sizex-2)/yDim * (rank-2) + 2;
         yEnd = (sizex-2)/yDim * (rank-1)-1;
       }
-    }
+*/
+   }
 
 
     if( red == 0 )
@@ -285,9 +311,19 @@ double relax_gaussBoundary( double *u,
      xStart = 1;
      xEnd = sizey-2;
    }
-    if(xDim == 2 && yDim == 2 )
+    if(xDim == yDim ) // topology p*p
     {
-      if( rank == 0 )
+        int stepX = (sizey-2)/xDim;
+
+        xStart = stepX * (rank/yDim) + 1;
+        xEnd = stepX * ( (rank/yDim) + 1 );
+
+        int stepY = (sizex-2)/yDim;
+
+        yStart = stepY * (rank % xDim) + 1;
+        yEnd = stepY * ( (rank % xDim)+1);
+
+/*      if( rank == 0 )
       {
         xStart = (sizey-2)/xDim * rank + 1;
         xEnd = (sizey-2)/xDim * (rank+1);
@@ -315,6 +351,7 @@ double relax_gaussBoundary( double *u,
         yStart = (sizex-2)/yDim * (rank-2) + 1;
         yEnd = (sizex-2)/yDim * (rank-1);
       }
+*/
     }
 
     if( red == 0 )

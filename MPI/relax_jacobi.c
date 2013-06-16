@@ -6,6 +6,7 @@
  */
 #include <stdbool.h>
 #include "heat.h"
+#include <omp.h>
 
 /*
  * Residual (length of error vector)
@@ -47,6 +48,7 @@ double relax_jacobi( double **u, double **utmp,
    double diff, sum = 0.0;
    int xStart, xEnd, yStart, yEnd;
 
+   // code generalised
    if( yDim == 1 )
    {
      xStart =  ((sizey-2)/xDim) * rank + 1;
@@ -54,7 +56,8 @@ double relax_jacobi( double **u, double **utmp,
      yStart = 1;
      yEnd = sizex-2;
    }
- 
+
+   // code generalised 
   if( xDim == 1 )
    {
      yStart =  (sizex-2)/yDim * rank + 1;
@@ -63,36 +66,18 @@ double relax_jacobi( double **u, double **utmp,
      xEnd = sizey-2;
    }
    
-    if(xDim == 2 && yDim == 2 )
+    if(xDim == yDim ) // topology p * p
     {
-      if( rank == 0 )
-      {
-        xStart = (sizey-2)/xDim * rank + 1;
-        xEnd = (sizey-2)/xDim * (rank+1);
-        yStart = (sizex-2)/yDim * rank + 1;
-        yEnd = (sizex-2)/yDim * (rank+1);
-      }
-      else if( rank == 1)
-      {
-        xStart = (sizey-2)/xDim * (rank-1) + 1;
-        xEnd = (sizey-2)/xDim * rank;
-        yStart = (sizex-2)/yDim * rank + 1;
-        yEnd = (sizex-2)/yDim * (rank+1);
-      }
-      else if( rank == 3 )
-      {
-        xStart = (sizey-2)/xDim * (rank-2) + 1;
-        xEnd = (sizey-2)/xDim * (rank-1);
-        yStart = (sizex-2)/yDim * (rank-2) + 1;
-        yEnd = (sizex-2)/yDim * (rank-1);
-      }
-      else if( rank == 2)
-      {
-        xStart = (sizey-2)/xDim * (rank-1) + 1;
-        xEnd = (sizey-2)/xDim * (rank);
-        yStart = (sizex-2)/yDim * (rank-2) + 1;
-        yEnd = (sizex-2)/yDim * (rank-1);
-      }
+        int stepX = (sizey-2)/xDim;
+
+        xStart = stepX * (rank/yDim) + 1;
+        xEnd = stepX * ( (rank/yDim) + 1 );
+        
+        int stepY = (sizex-2)/yDim;
+        
+        yStart = stepY * (rank % xDim) + 1;
+        yEnd = stepY * ( (rank % xDim)+1);
+//        printf("\nRank = %d, xStart= %d, xEnd = %d, yStart=%d, yEnd= %d", rank, xStart, xEnd, yStart, yEnd);
     }
 
     // relaxation
@@ -126,6 +111,7 @@ double relax_jacobiInner( double **u, double **utmp,
    double diff, sum = 0.0;
    int xStart, xEnd, yStart, yEnd;
 
+   // generalised code
    if( yDim == 1 )
    {
      xStart =  ((sizey-2)/xDim) * rank + 2;
@@ -134,6 +120,7 @@ double relax_jacobiInner( double **u, double **utmp,
      yEnd = sizex-2;
    }
  
+  // generalised code
   if( xDim == 1 )
    {
      yStart =  (sizex-2)/yDim * rank + 2;
@@ -142,8 +129,24 @@ double relax_jacobiInner( double **u, double **utmp,
      xEnd = sizey-2;
    }
    
-    if(xDim == 2 && yDim == 2 )
+    if( xDim == yDim )
     {
+        int stepX = (sizey-2)/xDim;
+
+        xStart = stepX * (rank/yDim) + 1;
+        xEnd = stepX * ( (rank/yDim) + 1 );
+        
+        int stepY = (sizex-2)/yDim;
+        
+        yStart = stepY * (rank % xDim) + 1;
+        yEnd = stepY * ( (rank % xDim)+1);
+
+        // since inner
+        xStart = xStart + 1;
+        xEnd = xEnd - 1;
+        yStart = yStart + 1;
+        yEnd = yEnd - 1;
+/*
       if( rank == 0 )
       {
         xStart = (sizey-2)/xDim * rank + 2;
@@ -172,6 +175,7 @@ double relax_jacobiInner( double **u, double **utmp,
         yStart = (sizex-2)/yDim * (rank-2) + 2;
         yEnd = (sizex-2)/yDim * (rank-1)-1;
       }
+*/
     }
 
     // relaxation
@@ -200,6 +204,7 @@ double relax_jacobiBoundary( double **u, double **utmp,
    double diff, sum = 0.0;
    int xStart, xEnd, yStart, yEnd;
 
+   // generalised code
    if( yDim == 1 )
    {
      xStart =  ((sizey-2)/xDim) * rank + 1;
@@ -208,6 +213,7 @@ double relax_jacobiBoundary( double **u, double **utmp,
      yEnd = sizex-2;
    }
  
+   // generalised code
   if( xDim == 1 )
    {
      yStart =  (sizex-2)/yDim * rank + 1;
@@ -216,8 +222,18 @@ double relax_jacobiBoundary( double **u, double **utmp,
      xEnd = sizey-2;
    }
 
-    if(xDim == 2 && yDim == 2 )
+    if(xDim == yDim )
     {
+        int stepX = (sizey-2)/xDim;
+
+        xStart = stepX * (rank/yDim) + 1;
+        xEnd = stepX * ( (rank/yDim) + 1 );
+        
+        int stepY = (sizex-2)/yDim;
+        
+        yStart = stepY * (rank % xDim) + 1;
+        yEnd = stepY * ( (rank % xDim)+1);
+/*
       if( rank == 0 )
       {
         xStart = (sizey-2)/xDim * rank + 1;
@@ -246,6 +262,7 @@ double relax_jacobiBoundary( double **u, double **utmp,
         yStart = (sizex-2)/yDim * (rank-2) + 1;
         yEnd = (sizex-2)/yDim * (rank-1);
       }
+*/
     }
 
     // relaxation working for x boundaries

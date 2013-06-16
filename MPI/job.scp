@@ -8,7 +8,7 @@
 #@ error = job$(jobid).out
 #@ energy_policy_tag = NONE
 #@ node = 1
-#@ total_tasks = 4 
+#@ total_tasks = 4
 #@ node_usage = not_shared
 #@ queue
 . /etc/profile

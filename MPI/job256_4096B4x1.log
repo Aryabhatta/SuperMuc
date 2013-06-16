@@ -1,0 +1,46 @@
+
+DISK GROUP QUOTAS for home and project file systems:
+Filesystem                                 Quota     Used Space     Free Space
+/home/hpc/pr85ni          ($HOME)        102.4GB   17.5GB (17%)   84.9GB (83%)
+/gpfs/work/pr85ni         ($WORK)          4.4TB   11.0MB ( 0%)    4.4TB (100%)
+-------------------------------------------------------------------------------
+
+Executing LRZ User Prolog ...
+Resolutions       : (256, 4096, ... 4100)
+Iterations        : 50
+Algorithm         : 0 (Jacobi)
+Num. Heat sources : 2
+Resolutions       : (256, 4096, ... 4100)
+Iterations        : 50
+Algorithm         : 0 (Jacobi)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 1.00 
+   2: (1.00, 1.00) 1.00 0.50 
+   1: (0.00, 0.00) 1.00 1.00 
+   2: (1.00, 1.00) 1.00 0.50 
+Resolutions       : (256, 4096, ... 4100)
+Iterations        : 50
+Algorithm         : 0 (Jacobi)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 1.00 
+   2: (1.00, 1.00) 1.00 0.50 
+Resolutions       : (256, 4096, ... 4100)
+Iterations        : 50
+Algorithm         : 0 (Jacobi)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 1.00 
+   2: (1.00, 1.00) 1.00 0.50 
+Resolution:   256, Time: 0.003 (0.013 GFlop => 4494.77 MFlop/s, residual 0.030223, 50 iterations)
+  256 4494.774049
+ 4096 5011.153286
+Resolution:  4096, Time: 0.670 (3.355 GFlop => 5011.15 MFlop/s, residual 0.483368, 50 iterations)
+
+Total Program run time = 1.011773, Rank = 1
+
+Total Program run time = 1.025350, Rank = 2
+
+Total Program run time = 1.038848, Rank = 3
+
+ 0 in coarsem
+
+Total Program run time = 4.875760, Rank = 0
