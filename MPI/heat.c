@@ -238,7 +238,7 @@ int main( int argc, char *argv[] )
 	    flop = iter * 4.0 * param.act_res * param.act_res;
 
 		fprintf(stderr, "Resolution: %5u, ", param.act_res);
-		fprintf(stderr, "Time: %04.3f ", runtime);
+		fprintf(stderr, "Time: %04.6f ", runtime);
 		fprintf(stderr, "(%3.3f GFlop => %6.2f MFlop/s, ", 
 			    flop/1000000000.0,
 			    flop/runtime/1000000);
@@ -255,7 +255,6 @@ int main( int argc, char *argv[] )
 	param.act_res += param.res_step_size;
 
     } // Grid loop ends
-    printf("\nRank=%d, Residual = %lf", rank, residual);
    
     sendU( xDim, yDim, rank, np, NumTask, param.u );
     
@@ -308,19 +307,11 @@ void sendResidual(int rank, int numtask, double * residual)
 		    MPI_Recv(&buffer,1, MPI_DOUBLE, i, 10, MPI_COMM_WORLD, &stat);
     		*residual += buffer;
         }
-/*		MPI_Recv(&buffer,1, MPI_DOUBLE,2, 10, MPI_COMM_WORLD, &stat);
-		*residual += buffer;
-		MPI_Recv(&buffer,1, MPI_DOUBLE,3, 10, MPI_COMM_WORLD, &stat);
-		*residual += buffer;*/
 	}
     else
     {
 		MPI_Send(residual,1, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD);
     }
-/*	if(rank==1 || rank==2 || rank ==3 )
-	{
-		MPI_Send(residual,1, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD);
-	}*/
 }
 
 void sendU(int xDim, int yDim, int rank, int np, int NumTask, double * u )
@@ -467,120 +458,6 @@ void sendU(int xDim, int yDim, int rank, int np, int NumTask, double * u )
                 }
             }
         }
-
-/*      if( rank == 1 )
-      {	     
-
-        xStart = (np-2)/xDim * (rank-1) + 1; // 1
-        xEnd = (np-2)/xDim * rank;          // 50
-        yStart = (np-2)/yDim * rank + 1;    // 51
-        yEnd = (np-2)/yDim * (rank+1);      // 100
-
-    	// copy
-    	for( i=xStart; i<=xEnd; i++ )
-    	{
-           for( j=yStart; j<=yEnd; j++ )
-           {
-    		upart[(i-xStart)*((np-2)/2)+(j-yStart)] = u[i*np+j];
-           }
-        }
-
-	    MPI_Send(upart,upartSz, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD );
-     }
-     if( rank == 3 )
-     {
-    
-        xStart = (np-2)/xDim * (rank-2) + 1;    // 51
-        xEnd = (np-2)/xDim * (rank-1);            // 100
-        yStart = (np-2)/yDim * (rank-2) + 1;    // 51
-        yEnd = (np-2)/yDim * (rank-1);            // 100
-
-    	// copy
-    	for( i=xStart; i<=xEnd; i++ )
-    	{
-           for( j=yStart; j<=yEnd; j++ )
-           {
-    		upart[(i-xStart)*((np-2)/2)+(j-yStart)] = u[i*np+j];
-           }
-        }
-
-	    MPI_Send(upart,upartSz, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD );
-     }
-     if( rank == 2 )
-     {
-        xStart = (np-2)/xDim * (rank-1) + 1;    // 51
-        xEnd = (np-2)/xDim * (rank);          // 100
-        yStart = (np-2)/yDim * (rank-2) + 1;    // 1
-        yEnd = (np-2)/yDim * (rank-1);          // 50
-
-    	// copy
-    	for( i=xStart; i<=xEnd; i++ )
-    	{
-           for( j=yStart; j<=yEnd; j++ )
-           {
-    		upart[(i-xStart)*((np-2)/2)+(j-yStart)] = u[i*np+j];
-           }
-        }
-
-	    MPI_Send(upart,upartSz, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD );
-     }
-     if( rank == 0 )
-     {
-
-       // Receive from 1
-       MPI_Recv(upart, upartSz, MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, &stat);
-
-        xStart = (np-2)/xDim * (1-1) + 1;
-        xEnd = (np-2)/xDim * 1;
-        yStart = (np-2)/yDim * 1 + 1;
-        yEnd = (np-2)/yDim * (1+1);
-
-    	// copy
-    	for( i=xStart; i<=xEnd; i++ )
-    	{
-           for( j=yStart; j<=yEnd; j++ )
-           {
-    		 u[i*np+j] = upart[(i-xStart)*((np-2)/2)+(j-yStart)] ;
-           }
-        }
-
-       // Receive from 3
-       MPI_Recv(upart, upartSz, MPI_DOUBLE, 3, 10, MPI_COMM_WORLD, &stat);
-
-        xStart = (np-2)/xDim * (3-2) + 1;
-        xEnd = (np-2)/xDim * (3-1);
-        yStart = (np-2)/yDim * (3-2) + 1;
-        yEnd = (np-2)/yDim * (3-1);
-
-    	// copy
-    	for( i=xStart; i<=xEnd; i++ )
-    	{
-           for( j=yStart; j<=yEnd; j++ )
-           {
-    	      u[i*np+j] = upart[(i-xStart)*((np-2)/2)+(j-yStart)];
-           }
-        }
-
-
-       // Receive from 2
-       MPI_Recv(upart, upartSz, MPI_DOUBLE, 2, 10, MPI_COMM_WORLD, &stat);
-
-        xStart = (np-2)/xDim * (2-1) + 1;
-        xEnd = (np-2)/xDim * (2);
-        yStart = (np-2)/yDim * (2-2) + 1;
-        yEnd = (np-2)/yDim * (2-1);
-
-    	// copy
-    	for( i=xStart; i<=xEnd; i++ )
-    	{
-           for( j=yStart; j<=yEnd; j++ )
-           {
-    	      u[i*np+j] = upart[(i-xStart)*((np-2)/2)+(j-yStart)];
-           }
-        }
-
-     }// else closes
-*/
    }
     
     free(upart);
@@ -662,81 +539,8 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
 		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Drank, 10, comm, &stat);		
 		   updateu( buf, (np-2), index+1, u,1, np);
         }
-/*		if( rank == 1 )
-		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Urank, 10, comm, &stat);
-  		   int index = (np-2)/xDim * rank + 1;
-
-		   // Update U
-		   updateu( buf, (np-2), index-1, u,1, np);
- 
-		   // Send buffer
-		   for(  i=1; i< np-1; i++)
-		   {
-			buf[i-1] = u[index*np + i];
-   		   }
-
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, Urank, 10, comm);
-		
-		   index = (np-2)/xDim * (rank+1);
-
-		   // Send buffer
-		   for(  i=1; i< np-1; i++)
-		   {
-			buf[i-1] = u[index*np + i];
-   		   }
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, Drank, 10, comm);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Drank, 10, comm, &stat);		
-		   updateu( buf, (np-2), index+1, u,1, np);
-		}
-		if( rank == 2 )
-		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Urank, 10, comm, &stat);
-
-  		   int index = (np-2)/xDim * rank + 1;
-
-		   // Update U
-		   updateu( buf, (np-2), index-1, u,1, np);
- 
-		   // Send buffer
-		   for(  i=1; i< np-1; i++)
-		   {
-			buf[i-1] = u[index*np +i];
-   		   }
-
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, Urank, 10, comm);
-		
-		   index =  (np-2)/xDim * (rank+1);
-
-		   // Send buffer
-		   for(  i=1; i< np-1; i++)
-		   {
-			buf[i-1] = u[index*np +i];
-   		   }
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, Drank, 10, comm);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Drank, 10, comm, &stat);
-		
-		   updateu( buf, (np-2), index+1, u,1, np);
-		}
-
-		if( rank == 3 )
-		{
-  		   int index = (np-2)/xDim * rank + 1;
-
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Urank, 10, comm, &stat);
-
-		   updateu( buf, (np-2), index-1, u,1, np);
-		   // Send buffer
-		   for(  i=1; i< np-1; i++)
-		   {
-			buf[i-1] = u[index*np + i];
-   		   }
-
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, Urank, 10, comm);
-		}
-*/		
             free(buf);
-	    }
+    }
 	
 	    // for 1 * 4
 	    if( xDim == 1 )
@@ -802,105 +606,26 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
 		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Rrank, 10, comm, &stat);		
 		   updateucol( buf, (np-2), index+1, u,1, np);
         }
-/*		if( rank == 1 )
-		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Lrank, 10, comm, &stat);
-  		   int index = (np-2)/yDim * rank + 1;
-
-		   // Update U
-		   updateucol( buf, (np-2), index-1, u,1, np);
- 
-		   // Send buffer
-		   for(  i=1; i< np-1; i++)
-		   {
-			buf[i-1] = u[i*np + index];
-   		   }
-
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, Lrank, 10, comm);
-		
-		   index = (np-2)/yDim * (rank+1);
-
-		   // Send buffer
-		   for(  i=1; i< np-1; i++)
-		   {
-			buf[i-1] = u[i*np + index];
-   		   }
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, Rrank, 10, comm);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Rrank, 10, comm, &stat);		
-		   updateucol( buf, (np-2), index+1, u,1, np);
-		}
-		if( rank == 2 )
-		{
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Lrank, 10, comm, &stat);
-
-  		   int index = (np-2)/yDim * rank + 1;
-
-		   // Update U
-		   updateucol( buf, (np-2), index-1, u,1, np);
- 
-		   // Send buffer
-		   for(  i=1; i< np-1; i++)
-		   {
-			buf[i-1] = u[i*np +index];
-   		   }
-
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, Lrank, 10, comm);
-		
-		   index =  (np-2)/yDim * (rank+1);
-
-		   // Send buffer
-		   for(  i=1; i< np-1; i++)
-		   {
-			buf[i-1] = u[i*np +index];
-   		   }
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, Rrank, 10, comm);
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Rrank, 10, comm, &stat);
-		
-		   updateucol( buf, (np-2), index+1, u,1, np);
-		}
-		if( rank == 3 )
-		{
-  		   int index = (np-2)/yDim * rank + 1;
-
-		   MPI_Recv( buf, (np-2), MPI_DOUBLE, Lrank, 10, comm, &stat);
-
-		   updateucol( buf, (np-2), index-1, u,1, np);
-		   // Send buffer
-		   for(  i=1; i< np-1; i++)
-		   {
-			buf[i-1] = u[i*np + index];
-   		   }
-
-		   MPI_Send( buf, (np-2), MPI_DOUBLE, Lrank, 10, comm);
-		}
-*/		
             free(buf);
 	    }
 
     if( xDim == yDim ) // works only for k*k topologies
     {
-        double * buf1;// * buf2;
+        double * buf1;
         int size = (np-2)/xDim; 
         buf1 = (double*) malloc(sizeof(double)* size );
-   //     buf2 = (double*) malloc(sizeof(double)* size );
 
         int stepX = size;
         int stepY = size;
-//        printf("\n\n rank = %d, size = %d", rank, size);
-
-        // Generic logic to see if it works//
 
         // Carve out self boundaries
         int xStart = stepX * (rank/yDim) + 1 ;
         int xEnd = stepX * ( (rank/yDim) + 1);
         int yStart = stepY * (rank%xDim) + 1;
         int yEnd = stepY * ( (rank%xDim) + 1);
-//        printf("\nxSTart = %d, xEnd = %d, yStart = %d, yEnd = %d", xStart, xEnd, yStart, yEnd);
-//        printf("\n rank = %d, Urank=%d,Drank=%d,Lrank=%d,Rrank=%d", rank, Urank, Drank, Lrank, Rrank);
 
         if( Urank != -1 )
         {
- //           printf("\nrank=%d,Urank=%d",rank, Urank);
             // Send to Urank
             for( i=yStart; i<=yEnd; i++ )
             {
@@ -917,7 +642,6 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
         }
         if( Drank != -1 )
         {
-//            printf("\nrank=%d,Drank=%d",rank, Drank);
             // Send to Drank
             // copy boundary
             for( i=yStart; i<=yEnd; i++ )
@@ -933,7 +657,6 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
         }
         if( Rrank != -1 )
         {
-//            printf("\nrank = %d, Rrank=%d",rank, Rrank);
             // Send to Rrank
             for( i=xStart; i<=xEnd; i++ )
             {
@@ -947,7 +670,6 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
         }
         if( Lrank != -1 )
         {
-//            printf("\nrank = %d,Lrank=%d",rank, Lrank);
             // Send to Lrank, col yStart
             for( i=xStart; i<=xEnd; i++ )
             {
@@ -960,166 +682,8 @@ void commBoundary(int xDim, int yDim, int rank, int np, double * u, MPI_Comm com
             MPI_Recv( buf1, size, MPI_DOUBLE, Lrank, 10, comm, &stat );
 		    updateucol( buf1, size, (yStart-1), u,xStart, np);
         }
-//        printf("\n\n");
-/*
-        // Cases to send 2 boundaries
-        if( rank == 0)
-        {
-            int xEnd = stepX * ( (rank/yDim) + 1);
-            int yEnd = stepY * ( (rank%xDim) + 1);
-
-            // copy boundary
-            for( i=0; i<size; i++ )
-            {
-                // buf 1 send to 2
-                buf1[i] = u[ xEnd*np+ (i+1) ];
-            
-                // buf2 send to 1
-                buf2[i] = u[ (i+1)*np + yEnd ];
-            }
-
-            MPI_Send( buf1, size, MPI_DOUBLE, Drank, 10, comm);
-            MPI_Send( buf2, size, MPI_DOUBLE, Rrank, 10, comm);
-
-            // receive from 2 , row 51
-            MPI_Recv( buf1, size, MPI_DOUBLE, Drank, 10, comm, &stat );
-            updateu( buf1, size, xEnd+1, u,1,np);
-
-            // receive from 1 , col 51
-            MPI_Recv( buf2, size, MPI_DOUBLE, Rrank, 10, comm, &stat );
-		    updateucol( buf2, size, yEnd+1, u,1, np);
-
-            //#INPROGRESS#
-        }
-        else if( rank == yDim-1 )
-        {
-        }
-        else if( rank == (xDim * (yDim-1)) )
-        {
-        }
-        else if( rank == ( xDim*yDim -1 ) )
-        {
-        }
-        else // cases to send 3 boundaries
-        {
-        }
-
-
-        if( rank == 0 )
-        {
-            int xIndex = size;
-            int yIndex = size;
-
-            for( i=0; i<size; i++ )
-            {
-                // buf 1 send to 2
-                buf1[i] = u[ xIndex*np+ (i+1) ];
-            
-                // buf2 send to 1
-                buf2[i] = u[ (i+1)*np + yIndex ];
-            }
-        
-            MPI_Send( buf1, size, MPI_DOUBLE, Drank, 10, comm);
-            MPI_Send( buf2, size, MPI_DOUBLE, Rrank, 10, comm);
-
-            // receive from 2 , row 51
-            MPI_Recv( buf1, size, MPI_DOUBLE, Drank, 10, comm, &stat );
-            updateu( buf1, size, size+1, u,1,np);
-
-            // receive from 1 , col 51
-            MPI_Recv( buf2, size, MPI_DOUBLE, Rrank, 10, comm, &stat );
-		    updateucol( buf2, size, size+1, u,1, np);
-        }
-        if( rank == 1 )
-        {            
-            // receive from 3 , row 51
-            MPI_Recv( buf1, size, MPI_DOUBLE, Drank, 10, comm, &stat );
-            updateu( buf1, size, size+1, u,(size+1), np);
-
-            // receive from 0 , col 50
-            MPI_Recv( buf2, size, MPI_DOUBLE, Lrank, 10, comm, &stat );
-		    updateucol( buf2, size, size, u,1, np);
-
-            int xIndex = size;
-            int yIndex = size + 1;
-
-            for( i=size; i<(size+size); i++ )
-            {
-                // buf 1 send to 3
-                buf1[i-size] = u[ xIndex*np+ (i+1) ];
-            }
-            
-            for( i=0; i<size; i++ )
-            {
-                // buf2 send to 0
-                buf2[i] = u[ (i+1)*np + yIndex ];
-            }
-        
-            MPI_Send( buf1, size, MPI_DOUBLE, Drank, 10, comm);
-            MPI_Send( buf2, size, MPI_DOUBLE, Lrank, 10, comm);
-        }
-        if( rank == 3 )
-        {
-            int xIndex = size + 1;
-            int yIndex = size + 1;
-
-            for( i=size; i<(size+size); i++ )
-            {
-                // buf 1 send to 1
-                buf1[i-size] = u[ xIndex*np+ (i+1) ];
-            }
-
-            MPI_Send( buf1, size, MPI_DOUBLE, Urank, 10, comm);
-
-            // receive from 2 , col 50
-            MPI_Recv( buf2, size, MPI_DOUBLE, Lrank, 10, comm, &stat );
-		    updateucol( buf2, size, size, u,(size+1), np);
-
-            // receive from 1 , row 50
-            MPI_Recv( buf1, size, MPI_DOUBLE, Urank, 10, comm, &stat );
-            updateu( buf1, size, size, u,(size+1), np);
-
-            for( i=size; i<(size+size); i++ )
-            {
-                // buf2 send to 2
-                buf2[i-size] = u[ (i+1)*np + yIndex ];
-            }
-        
-            MPI_Send( buf2, size, MPI_DOUBLE, Lrank, 10, comm);
-        }
-        if( rank == 2 )
-        {
-            int xIndex = size + 1;
-            int yIndex = size;
-
-            // receive from 0 , row 50
-            MPI_Recv( buf1, size, MPI_DOUBLE, Urank, 10, comm, &stat );
-            updateu( buf1, size, size, u,1, np);
-
-            for( i=size; i<(size+size); i++ )
-            {
-                // buf2 send to 3
-                buf2[i-size] = u[ (i+1)*np + yIndex ];
-            }
-
-            MPI_Send( buf2, size, MPI_DOUBLE, Rrank, 10, comm);
-
-            for( i=0; i<size; i++ )
-            {
-                // buf 1 send to 0
-                buf1[i] = u[ xIndex*np+ (i+1) ];
-            }
-        
-            MPI_Send( buf1, size, MPI_DOUBLE, Urank, 10, comm);
-
-            // receive from 3 , col 51
-            MPI_Recv( buf2, size, MPI_DOUBLE, Rrank, 10, comm, &stat );
-		    updateucol( buf2, size, size+1, u, (size+1), np);
-        }
-*/
 
         free(buf1);
-  //      free(buf2);
     }
 
 }
@@ -1217,41 +781,6 @@ void updateBoundary( int xDim, int yDim, int rank, int np, double * u, MPI_Comm 
            MPI_Wait( request4, &stat);
            updateucol( buf4, size, (yStart-1), u,xStart, np);
         }
-
-/*        int size = (np-2)/2;
-        if( rank == 0)
-        {
-           MPI_Wait( request1, &stat);
-           updateu( buf1, size, size+1, u,1,np);
-
-           MPI_Wait( request2, &stat);
-		   updateucol( buf2, size, size+1, u,1, np);
-        }
-        if( rank == 1)
-        {
-           MPI_Wait( request1, &stat);
-           updateu( buf1, size, size+1, u,(size+1), np);
-
-           MPI_Wait( request2, &stat);
- 	       updateucol( buf2, size, size, u,1, np);
-        }
-        if( rank == 3)
-        {
-           MPI_Wait( request1, &stat);
-           updateu( buf1, size, size, u,(size+1), np);
-
-           MPI_Wait( request2, &stat);
-		   updateucol( buf2, size, size, u,(size+1), np);
-        }
-        if( rank == 2)
-        {
-           MPI_Wait( request1, &stat);
-           updateu( buf1, size, size, u,1, np);
-
-           MPI_Wait( request2, &stat);
-           updateucol( buf2, size, size+1, u, (size+1), np);
-        }
-*/
     }
 }
 
@@ -1413,7 +942,6 @@ void commBoundaryNB(int xDim, int yDim, int rank, int np, double * u, MPI_Comm c
             
             // receive from Urank , row (xStart-1)
             MPI_Irecv( buf1, size, MPI_DOUBLE, Urank, 10, comm, request1 );
-//            updateu( buf1, size, (xStart-1), u,yStart, np);
         }
         if( Drank != -1 )
         {
@@ -1428,7 +956,6 @@ void commBoundaryNB(int xDim, int yDim, int rank, int np, double * u, MPI_Comm c
 
             // Receive from Drank, row (xEnd+1)
             MPI_Irecv( buf2, size, MPI_DOUBLE, Drank, 10, comm, request2 );
-//            updateu( buf2, size, (xEnd+1), u,yStart,np);            
         }
         if( Rrank != -1 )
         {
@@ -1441,7 +968,6 @@ void commBoundaryNB(int xDim, int yDim, int rank, int np, double * u, MPI_Comm c
 
             // Recieve from Rrank, col (yEnd+1)
             MPI_Irecv( buf3, size, MPI_DOUBLE, Rrank, 10, comm, request3 );
-//		    updateucol( buf3, size, (yEnd+1), u,xStart, np);
         }
         if( Lrank != -1 )
         {
@@ -1455,122 +981,7 @@ void commBoundaryNB(int xDim, int yDim, int rank, int np, double * u, MPI_Comm c
 
             // Receive from Lrank, col (yStart-1)
             MPI_Irecv( buf4, size, MPI_DOUBLE, Lrank, 10, comm, request4 );
-//		    updateucol( buf4, size, (yStart-1), u,xStart, np);
         }
-
-
-/*        double * buf11, * buf22;
-        int size = (np-2)/2;
-        buf11 = (double*) malloc(sizeof(double)* size );
-        buf22 = (double*) malloc(sizeof(double)* size );
-
-        if( rank == 0 )
-        {
-            int xIndex = size;
-            int yIndex = size;
-
-            for( i=0; i<size; i++ )
-            {
-                // buf 1 send to 2
-                buf11[i] = u[ xIndex*np+ (i+1) ];
-            
-                // buf2 send to 1
-                buf22[i] = u[ (i+1)*np + yIndex ];
-            }
-        
-            MPI_Isend( buf11, size, MPI_DOUBLE, Drank, 10, comm, &request);
-            MPI_Isend( buf22, size, MPI_DOUBLE, Rrank, 10, comm, &request);
-
-            // receive from 2 , row 51
-            MPI_Irecv( buf1, size, MPI_DOUBLE, Drank, 10, comm, request1 );
-
-            // receive from 1 , col 51
-            MPI_Irecv( buf2, size, MPI_DOUBLE, Rrank, 10, comm, request2 );
-        }
-        if( rank == 1 )
-        {            
-            // receive from 3 , row 51
-            MPI_Irecv( buf1, size, MPI_DOUBLE, Drank, 10, comm, request1 );
-
-            // receive from 0 , col 50
-            MPI_Irecv( buf2, size, MPI_DOUBLE, Lrank, 10, comm, request2 );
-
-            int xIndex = size;
-            int yIndex = size + 1;
-
-            for( i=size; i<(size+size); i++ )
-            {
-                // buf 1 send to 3
-                buf11[i-size] = u[ xIndex*np+ (i+1) ];
-            }
-            
-            for( i=0; i<size; i++ )
-            {
-                // buf2 send to 0
-                buf22[i] = u[ (i+1)*np + yIndex ];
-            }
-        
-            MPI_Isend( buf11, size, MPI_DOUBLE, Drank, 10, comm, &request);
-            MPI_Isend( buf22, size, MPI_DOUBLE, Lrank, 10, comm, &request);
-        }
-        if( rank == 3 )
-        {
-            int xIndex = size + 1;
-            int yIndex = size + 1;
-
-            for( i=size; i<(size+size); i++ )
-            {
-                // buf 1 send to 1
-                buf11[i-size] = u[ xIndex*np+ (i+1) ];
-            }
-
-            MPI_Isend( buf11, size, MPI_DOUBLE, Urank, 10, comm, &request);
-
-            // receive from 2 , col 50
-            MPI_Irecv( buf2, size, MPI_DOUBLE, Lrank, 10, comm, request2 );
-
-            // receive from 1 , row 50
-            MPI_Irecv( buf1, size, MPI_DOUBLE, Urank, 10, comm, request1 );
-
-            for( i=size; i<(size+size); i++ )
-            {
-                // buf2 send to 2
-                buf22[i-size] = u[ (i+1)*np + yIndex ];
-            }
-        
-            MPI_Isend( buf22, size, MPI_DOUBLE, Lrank, 10, comm, &request);
-        }
-        if( rank == 2 )
-        {
-            int xIndex = size + 1;
-            int yIndex = size;
-
-            // receive from 0 , row 50
-            MPI_Irecv( buf1, size, MPI_DOUBLE, Urank, 10, comm, request1 );
-
-            for( i=size; i<(size+size); i++ )
-            {
-                // buf2 send to 3
-                buf22[i-size] = u[ (i+1)*np + yIndex ];
-            }
-
-            MPI_Isend( buf22, size, MPI_DOUBLE, Rrank, 10, comm, &request);
-
-            for( i=0; i<size; i++ )
-            {
-                // buf 1 send to 0
-                buf11[i] = u[ xIndex*np+ (i+1) ];
-            }
-        
-            MPI_Isend( buf11, size, MPI_DOUBLE, Urank, 10, comm, &request);
-
-            // receive from 3 , col 51
-            MPI_Irecv( buf2, size, MPI_DOUBLE, Rrank, 10, comm, request2 );
-        }
-*/
-
         free(buf11);
-    //    free(buf22);
     }
-
 }

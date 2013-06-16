@@ -77,7 +77,6 @@ double relax_jacobi( double **u, double **utmp,
         
         yStart = stepY * (rank % xDim) + 1;
         yEnd = stepY * ( (rank % xDim)+1);
-//        printf("\nRank = %d, xStart= %d, xEnd = %d, yStart=%d, yEnd= %d", rank, xStart, xEnd, yStart, yEnd);
     }
 
     // relaxation
@@ -146,36 +145,6 @@ double relax_jacobiInner( double **u, double **utmp,
         xEnd = xEnd - 1;
         yStart = yStart + 1;
         yEnd = yEnd - 1;
-/*
-      if( rank == 0 )
-      {
-        xStart = (sizey-2)/xDim * rank + 2;
-        xEnd = (sizey-2)/xDim * (rank+1)-1;
-        yStart = (sizex-2)/yDim * rank + 2;
-        yEnd = (sizex-2)/yDim * (rank+1) - 1;
-      }
-      else if( rank == 1)
-      {
-        xStart = (sizey-2)/xDim * (rank-1) + 2;
-        xEnd = (sizey-2)/xDim * rank - 1;
-        yStart = (sizex-2)/yDim * rank + 2;
-        yEnd = (sizex-2)/yDim * (rank+1) - 1 ;
-      }
-      else if( rank == 3 )
-      {
-        xStart = (sizey-2)/xDim * (rank-2) + 2;
-        xEnd = (sizey-2)/xDim * (rank-1) -1 ;
-        yStart = (sizex-2)/yDim * (rank-2) + 2;
-        yEnd = (sizex-2)/yDim * (rank-1)-1;
-      }
-      else if( rank == 2)
-      {
-        xStart = (sizey-2)/xDim * (rank-1) + 2;
-        xEnd = (sizey-2)/xDim * (rank)-1;
-        yStart = (sizex-2)/yDim * (rank-2) + 2;
-        yEnd = (sizex-2)/yDim * (rank-1)-1;
-      }
-*/
     }
 
     // relaxation
@@ -233,36 +202,6 @@ double relax_jacobiBoundary( double **u, double **utmp,
         
         yStart = stepY * (rank % xDim) + 1;
         yEnd = stepY * ( (rank % xDim)+1);
-/*
-      if( rank == 0 )
-      {
-        xStart = (sizey-2)/xDim * rank + 1;
-        xEnd = (sizey-2)/xDim * (rank+1);
-        yStart = (sizex-2)/yDim * rank + 1;
-        yEnd = (sizex-2)/yDim * (rank+1);
-      }
-      else if( rank == 1)
-      {
-        xStart = (sizey-2)/xDim * (rank-1) + 1;
-        xEnd = (sizey-2)/xDim * rank;
-        yStart = (sizex-2)/yDim * rank + 1;
-        yEnd = (sizex-2)/yDim * (rank+1);
-      }
-      else if( rank == 3 )
-      {
-        xStart = (sizey-2)/xDim * (rank-2) + 1;
-        xEnd = (sizey-2)/xDim * (rank-1);
-        yStart = (sizex-2)/yDim * (rank-2) + 1;
-        yEnd = (sizex-2)/yDim * (rank-1);
-      }
-      else if( rank == 2)
-      {
-        xStart = (sizey-2)/xDim * (rank-1) + 1;
-        xEnd = (sizey-2)/xDim * (rank);
-        yStart = (sizex-2)/yDim * (rank-2) + 1;
-        yEnd = (sizex-2)/yDim * (rank-1);
-      }
-*/
     }
 
     // relaxation working for x boundaries
