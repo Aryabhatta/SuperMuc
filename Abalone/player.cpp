@@ -14,12 +14,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <mpi.h>
 
 #include "board.h"
 #include "search.h"
 #include "eval.h"
 #include "network.h"
 
+int GlobalRank;
 
 /* Global, static vars */
 NetworkLoop l;
@@ -108,10 +110,13 @@ void MyDomain::received(char* str)
 	    case Board::timeout2:
 	    case Board::win1:
 	    case Board::win2:
-        printf("\nTotal run time for player ");
-	    printf("%s ", (myColor == Board::color1) ? "O":"X");
-        printf(" =  %lf\n", (Tottime/1000));
-        printf("Evaluations per sec = %lf \n", (TotNoEval*1000/Tottime));
+	  if( GlobalRank ==  0)
+	  {
+        	printf("\nTotal run time for player ");
+	    	printf("%s ", (myColor == Board::color1) ? "O":"X");
+        	printf(" =  %lf\n", (Tottime/1000));
+	        printf("Evaluations per sec = %lf \n", (TotNoEval*1000/Tottime));
+	  }
 		l.exit();
 	    default:
 		break;
@@ -137,10 +142,14 @@ void MyDomain::received(char* str)
 	}
 	printf("draws '%s' (after %d.%03d secs)...\n",
 	       m.name(), msecsPassed/1000, msecsPassed%1000);
-    Tottime += msecsPassed;
+	    Tottime += msecsPassed;
 
-	b.playMove(m, msecsPassed);
-	sendBoard();
+	if( GlobalRank == 0 )
+	{
+		printf("\nMoving board for rank = %d, Move:%s \n ", GlobalRank, m.name());
+		b.playMove(m, msecsPassed);
+		sendBoard();
+	}
 
 	if (changeEval)
 	    ev.changeEvaluation();
@@ -158,10 +167,13 @@ void MyDomain::received(char* str)
 		case Board::timeout2:
 		case Board::win1:
 		case Board::win2:
-        printf("\nTotal run time for player ");
-	    printf("%s ", (myColor == Board::color1) ? "O":"X");
-        printf(" =  %lf\n", (Tottime/1000));
-        printf("Evaluations per sec = %lf \n", (TotNoEval*1000/Tottime));
+	if( GlobalRank ==  0)
+	{
+	        printf("\nTotal run time for player ");
+		printf("%s ", (myColor == Board::color1) ? "O":"X");
+	        printf(" =  %lf\n", (Tottime/1000));
+        	printf("Evaluations per sec = %lf \n", (TotNoEval*1000/Tottime));
+	}
 		    l.exit();
 		default:
 		    break;
@@ -293,19 +305,35 @@ void parseArgs(int argc, char* argv[])
 int main(int argc, char* argv[])
 {
     parseArgs(argc, argv);
+    int NumTask, rank;
+
+    MPI_Init( &argc, &argv );
+    MPI_Comm_size( MPI_COMM_WORLD, &NumTask);
+    MPI_Comm_rank( MPI_COMM_WORLD, &rank);
+
+    GlobalRank = rank;
 
     SearchStrategy* ss = SearchStrategy::create(strategyNo);
-//    if (verbose)
-	printf("Using strategy '%s' ...\n", ss->name());
+    if (verbose)
+    	printf("Using strategy '%s' ...\n", ss->name());
     ss->setMaxDepth(maxDepth);
 
     b.setSearchStrategy( ss );
     ss->setEvaluator(&ev);
-    ss->registerCallbacks(new SearchCallbacks(verbose));
+    if( verbose )
+      printf("\nIn main, rank = %d\n", rank);
+    ss->registerCallbacks(new SearchCallbacks(verbose, NumTask, rank));
 
-    MyDomain d(lport);
-    if (host) d.addConnection(host, rport);
+//    if( rank == 0 )
+//    {
+//        printf("\nStarting, rank = %d\n", rank);
+        MyDomain d(lport);
+        if (host) d.addConnection(host, rport);
 
-    l.install(&d);
-    l.run();
+        l.install(&d);
+//	if( rank == 0)
+	        l.run();
+//    }
+
+    MPI_Finalize();
 }

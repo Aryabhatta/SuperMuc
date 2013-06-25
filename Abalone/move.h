@@ -62,6 +62,7 @@ class Move
   short field;
   unsigned char direction;
   MoveType type;
+  int value;
 };
 
 

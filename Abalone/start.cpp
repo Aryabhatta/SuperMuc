@@ -83,10 +83,10 @@ void MyDomain::received(char* str)
 	    if (onlyReachable) return;
 	}
 	else {
-	    if (b.actColor() == Board::color1)
-		printf("O draws move '%s'...\n", m.name());
+/*	    if (b.actColor() == Board::color1)
+//		printf("O draws move '%s'...\n", m.name()); // commenting fr time bein
 	    else
-		printf("X draws move '%s'...\n", m.name());
+//		printf("X draws move '%s'...\n", m.name());*/
 	}
     }
 

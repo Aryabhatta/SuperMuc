@@ -5,10 +5,10 @@
 #CXX = g++
 
 # Use this for the Intel C++ compiler ("icc" is only the C version)
-CXX = icpc
+#CXX = icpc
 
 # Use this for MPI
-#CXX = mpiCC
+CXX = mpiCC
 
 
 ### Options
@@ -18,7 +18,7 @@ CXX = icpc
 #LDFLAGS=
 
 # Useful options for Intel C++
-CXXFLAGS=-O3 -fast
+CXXFLAGS=
 LDFLAGS=
 
 

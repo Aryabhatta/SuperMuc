@@ -173,6 +173,11 @@ class Board
 
   static int fieldDiffOfDir(int d) { return direction[d]; }
 
+/*  int getRank()
+  {
+	return _ss.getRank();
+  }*/
+
  private:
   void setFieldValues();
 

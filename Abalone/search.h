@@ -17,7 +17,12 @@ class SearchStrategy;
 class SearchCallbacks
 {
  public:
-    SearchCallbacks(int v = 0) { _verbose = v; }
+    SearchCallbacks(int v = 0, int NumTask=0, int rank=0) 
+    { 
+        _verbose = v; 
+        _NumTask = NumTask;
+        _rank = rank;
+    }
     virtual ~SearchCallbacks() {}
     
     // called at beginning of new search. If <msecs> >0,
@@ -42,11 +47,14 @@ class SearchCallbacks
 
     int msecsPassed() { return _msecsPassed; }
     int verbose() { return _verbose; }
+    int getNumTask(){ return _NumTask; }
+    int getRank(){ return _rank; }
 
  private:
     int _verbose;
     int _leavesVisited, _nodesVisited;
     int _msecsPassed, _msecsForSearch;
+    int _NumTask, _rank;
 };
 
 
@@ -82,6 +90,11 @@ class SearchStrategy
     virtual SearchStrategy* clone() = 0;
 
     void stopSearch() { _stopSearch = true; }
+
+/*    int getRank()
+    {
+	return _sc.getRank();
+    }*/
 
  protected:
     /**
