@@ -21,8 +21,6 @@
 #include "eval.h"
 #include "network.h"
 
-int GlobalRank;
-
 /* Global, static vars */
 NetworkLoop l;
 Board b;
@@ -110,13 +108,10 @@ void MyDomain::received(char* str)
 	    case Board::timeout2:
 	    case Board::win1:
 	    case Board::win2:
-	  if( GlobalRank ==  0)
-	  {
         	printf("\nTotal run time for player ");
 	    	printf("%s ", (myColor == Board::color1) ? "O":"X");
         	printf(" =  %lf\n", (Tottime/1000));
 	        printf("Evaluations per sec = %lf \n", (TotNoEval*1000/Tottime));
-	  }
 		l.exit();
 	    default:
 		break;
@@ -144,12 +139,9 @@ void MyDomain::received(char* str)
 	       m.name(), msecsPassed/1000, msecsPassed%1000);
 	    Tottime += msecsPassed;
 
-	if( GlobalRank == 0 )
-	{
-		printf("\nMoving board for rank = %d, Move:%s \n ", GlobalRank, m.name());
-		b.playMove(m, msecsPassed);
-		sendBoard();
-	}
+	printf("\nMoving board for Move:%s \n ", m.name());
+	b.playMove(m, msecsPassed);
+	sendBoard();
 
 	if (changeEval)
 	    ev.changeEvaluation();
@@ -167,13 +159,11 @@ void MyDomain::received(char* str)
 		case Board::timeout2:
 		case Board::win1:
 		case Board::win2:
-	if( GlobalRank ==  0)
-	{
+
 	        printf("\nTotal run time for player ");
 		printf("%s ", (myColor == Board::color1) ? "O":"X");
 	        printf(" =  %lf\n", (Tottime/1000));
         	printf("Evaluations per sec = %lf \n", (TotNoEval*1000/Tottime));
-	}
 		    l.exit();
 		default:
 		    break;
@@ -311,9 +301,8 @@ int main(int argc, char* argv[])
     MPI_Comm_size( MPI_COMM_WORLD, &NumTask);
     MPI_Comm_rank( MPI_COMM_WORLD, &rank);
 
-    GlobalRank = rank;
-
     SearchStrategy* ss = SearchStrategy::create(strategyNo);
+
     if (verbose)
     	printf("Using strategy '%s' ...\n", ss->name());
     ss->setMaxDepth(maxDepth);
@@ -324,16 +313,21 @@ int main(int argc, char* argv[])
       printf("\nIn main, rank = %d\n", rank);
     ss->registerCallbacks(new SearchCallbacks(verbose, NumTask, rank));
 
-//    if( rank == 0 )
-//    {
-//        printf("\nStarting, rank = %d\n", rank);
+    if( rank == 0 )
+    {
+        printf("\nStarting, rank = %d\n", rank);
         MyDomain d(lport);
         if (host) d.addConnection(host, rport);
 
         l.install(&d);
-//	if( rank == 0)
-	        l.run();
-//    }
+	    l.run();
+    }
+    else
+    {
+    	printf("\nRank %d executing wait\n", rank);
+        ss->setBoard( &b );
+	    ss->wait();
+    }
 
     MPI_Finalize();
 }

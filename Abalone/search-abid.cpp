@@ -18,6 +18,8 @@ class ABIDStrategy: public SearchStrategy
 
     Move& nextMove() { return _pv[1]; }
 
+    void wait(){}
+
  private:
     void searchBestMove();
     /* recursive alpha/beta search */

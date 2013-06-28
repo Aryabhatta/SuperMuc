@@ -34,6 +34,8 @@ class OneLevelStrategy: public SearchStrategy
     // Factory method: just return a new instance of this class
     SearchStrategy* clone() { return new OneLevelStrategy(); }
 
+    void wait(){}
+
  private:
 
     /**

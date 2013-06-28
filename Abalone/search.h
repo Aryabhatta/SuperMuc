@@ -8,6 +8,8 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 
+#include <iostream>
+using namespace std;
 #include "move.h"
 
 class Board;
@@ -91,9 +93,16 @@ class SearchStrategy
 
     void stopSearch() { _stopSearch = true; }
 
-/*    int getRank()
+    virtual void wait() = 0;
+
+    void setBoard( Board * b )
     {
-	return _sc.getRank();
+        _board = b;
+    }
+/*    void wait()
+    {
+  	cout << "Hi, I'm waiting !" << endl;
+	_next->wait();
     }*/
 
  protected:
@@ -121,6 +130,7 @@ class SearchStrategy
     void finishedNode(int d, Move* bestList);
     // see Evaluator::calcEvaluation
     int evaluate();
+
 
 
     int _maxDepth;
