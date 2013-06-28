@@ -133,7 +133,7 @@ void MiniMaxStrategy::searchBestMove()
 	    cout << "\nIn searchBestMove()\n";
 
         int i=0;
-    	int value = 0;
+    
 	    long min = 20000;
     	long max = -20000;
 	    int currentDepth = 0;
@@ -163,9 +163,9 @@ void MiniMaxStrategy::searchBestMove()
         // Partition Moves
         // Assuming 1 slave process
         // loop over all moves
-//        while(list.getNext(m)) 
-//        {
-            list.getNext(m);
+        while(list.getNext(m)) 
+        {
+            if( print )
     	    cout << "Move: " << m.name();
  
     	    // 1.PLAY MOVE
@@ -174,14 +174,7 @@ void MiniMaxStrategy::searchBestMove()
             // 2. send board to slave , along with move no
             int len = sprintf(boardLayout, "%s\n",_board->getState());
 
-            cout << "Size of board" << strlen(boardLayout) << " Len: " << len << endl;
-
-//            cout << "Printing board for rank:" << rank << endl;
-            cout << boardLayout;
-
             MPI_Send( boardLayout, 500, MPI_CHAR, 1, 10, MPI_COMM_WORLD );
-
-            cout << "After Send" << endl;
 
         	// 3,TAKE BACK
         	_board->takeBack();
@@ -189,35 +182,29 @@ void MiniMaxStrategy::searchBestMove()
             // 4. Get result, evaluate value, maximise/minimise
             // Receive moves
         	MPI_Recv(&valueR, 1, MPI_INT, 1,10,MPI_COMM_WORLD, &stat);
-        	MPI_Recv(&NoEvaluationsR, 1, MPI_INT, 1,10,MPI_COMM_WORLD, &stat);
+  //      	MPI_Recv(&NoEvaluationsR, 1, MPI_INT, 1,10,MPI_COMM_WORLD, &stat);
 
-        	_ev->addNoEval( NoEvaluationsR );
+    //    	_ev->addNoEval( NoEvaluationsR );
 
             // Choose the best move
 	        if( CurrentColor == _board->color1 ) // O, black
 	        {
-	            if( valueR > value )
+	            if( valueR > max )
                 {
+                     max = valueR;
                      foundBestMove(0, m, valueR);
 	            }
 	        }
         	else // X, red
 	        {
-	            if( valueR < value )
+	            if( valueR < min )
 	            {
+                    min = valueR;
                     foundBestMove(0, m, valueR);
 	            }
 	        }
 
-//        } // end of while loop for moves
-
-
-        // For each move 
-        /* 1. play move 
-           2. send board to slave , along with move no
-           3. take back
-           4. Get result, evaluate value, maximise/minimise
-        */
+        } // end of while loop for moves
     }
     else
     {
@@ -227,36 +214,52 @@ void MiniMaxStrategy::searchBestMove()
         int value=0;
         int currentDepth = 0;
 
-        cout << "Before Recv" << endl;
+        while(1)
+        {
         // Receive board
         MPI_Recv( boardLayout, 500, MPI_CHAR, 0, 10, MPI_COMM_WORLD, &stat );
 
-        cout << "After Recv" << endl;
-
-        cout << "Printing board for rank:" << rank << endl;
-        cout << boardLayout;
-
-        cout << _board->getState();
+        if( strncmp( boardLayout, "exit", 4 ) == 0)
+        {
+            break;
+        }
 
         // Update board
-//        _board->setState( boardLayout );
+        _board->setState( boardLayout );
 
         // call minimax()
- //   	value = minimax(currentDepth);
-        value = 2;
+       	value = minimax(currentDepth);
 
         // send results
         // send best move
 	    MPI_Send(&value,1, MPI_INT,0, 10, MPI_COMM_WORLD ); // value
-/*	    MPI_Send(&_bestMove.field,1, MPI_SHORT,0, 10, MPI_COMM_WORLD ); //field
-	    MPI_Send(&_bestMove.direction,1, MPI_UNSIGNED_CHAR,0, 10, MPI_COMM_WORLD );// direction
-	    MPI_Send(&_bestMove.type,1, MPI_INT,0, 10, MPI_COMM_WORLD ); // TYPE-INT
-*/
-	    int NoEvaluations = _ev->getNoEval();
+//	    int NoEvaluations = _ev->getNoEval();
 
 	    // send No of eval
-	    MPI_Send(&NoEvaluations ,1, MPI_INT,0, 10, MPI_COMM_WORLD ); // value
+//	    MPI_Send(&NoEvaluations ,1, MPI_INT,0, 10, MPI_COMM_WORLD ); // value
+        }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 	if( print )
 	cout << "\nIn searchBestMove()\n";

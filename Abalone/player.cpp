@@ -100,6 +100,7 @@ void MyDomain::received(char* str)
     }
 
     int state = b.validState();
+    int len;
     if ((state != Board::valid1) && 
 	(state != Board::valid2)) {
 	printf("%s\n", Board::stateDescription(state));
@@ -108,6 +109,13 @@ void MyDomain::received(char* str)
 	    case Board::timeout2:
 	    case Board::win1:
 	    case Board::win2:
+
+        char boardLayout[500];
+        // Send Exit Signal to slave
+        len = sprintf(boardLayout, "exit%s\n",b.getState());
+        MPI_Send( boardLayout, 500, MPI_CHAR, 1, 10, MPI_COMM_WORLD );
+
+
         	printf("\nTotal run time for player ");
 	    	printf("%s ", (myColor == Board::color1) ? "O":"X");
         	printf(" =  %lf\n", (Tottime/1000));
@@ -159,6 +167,11 @@ void MyDomain::received(char* str)
 		case Board::timeout2:
 		case Board::win1:
 		case Board::win2:
+
+        char boardLayout[500];
+        // Send Exit Signal to slave
+        len = sprintf(boardLayout, "exit%s\n",b.getState());
+        MPI_Send( boardLayout, 500, MPI_CHAR, 1, 10, MPI_COMM_WORLD );
 
 	        printf("\nTotal run time for player ");
 		printf("%s ", (myColor == Board::color1) ? "O":"X");
