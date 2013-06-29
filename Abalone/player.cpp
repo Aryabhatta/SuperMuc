@@ -271,7 +271,11 @@ void parseArgs(int argc, char* argv[])
 
 	if ((strcmp(argv[arg],"-p")==0) && (arg+1<argc)) {
 	    arg++;
-	    if (argv[arg][0]>'0' && argv[arg][0]<='9') {
+
+        host = "localhost";
+        int p =  atoi(argv[arg]);
+        rport = p;
+/*	    if (argv[arg][0]>'0' && argv[arg][0]<='9') {
 		lport = atoi(argv[arg]);
 		continue;
 	    }
@@ -282,7 +286,7 @@ void parseArgs(int argc, char* argv[])
 		p = atoi(c+1);
 	    }
 	    host = argv[arg];
-	    if (p) rport = p;
+	    if (p) rport = p;*/
 	    continue;
 	}
 	

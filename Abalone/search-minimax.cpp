@@ -127,6 +127,7 @@ int MiniMaxStrategy::minimax( int depth)
 
 void MiniMaxStrategy::searchBestMove()
 {
+/* LOGIC1
     if( _sc->getRank() ==  0 )
     {
     	if( print )
@@ -240,7 +241,232 @@ void MiniMaxStrategy::searchBestMove()
         }
     }
 
+*/
 
+   
+    // Round Robin Scheduling
+    if( _sc->getRank() == 0 )
+    {
+        char boardLayout[500];
+        int value = 0;
+        long min = 20000;
+        long max = -20000;
+        int currentDepth = 0;
+        int NoMoves= 0;
+        int CurrentColor = _board->actColor(); // stored own color
+
+        
+        // 2. send board to slave , along with move no
+        int len = sprintf(boardLayout, "%s\n",_board->getState());
+        MPI_Send( boardLayout, 500, MPI_CHAR, 1, 10, MPI_COMM_WORLD );
+        Move m;
+        MoveList list;
+
+        // Generate All Moves
+        // generate list of allowed moves, put them into <list>
+        generateMoves(list);
+    
+    // loop over all moves
+    while(list.getNext(m)) 
+    {
+    	if( print )
+    	cout << "Move: " << m.name();
+ 
+    	NoMoves++;
+        if( NoMoves % _sc->getNumTask() == _sc->getRank() )	
+        {	   
+
+        // Below code executes only for specific ranks
+
+    	// PLAY MOVE
+    	_board->playMove(m);
+    	
+    	value = minimax(currentDepth);
+    	
+    	if( print )
+    	cout << " Value: " << value;
+    	
+    	if( CurrentColor == _board->color1 ) // Assuming, O, Blck, max
+    	{
+    		if( value > max )
+    		{
+    			if( print )
+    			cout << "Color: " << CurrentColor << "-Maximising" << endl;
+    			max = value;
+			    m.value = value;
+    			foundBestMove(0, m, value);
+    		}    			
+    	}
+    	else // Assuming X, Red
+    	{
+    		if( value < min )
+			{
+    			if( print )
+				cout << "Color: " << CurrentColor << "-Minimising" << endl;
+				min = value;
+				m.value = value;
+				foundBestMove(0, m, value);
+			}    	
+    	}
+    	
+    	if( print )
+    	cout << " Max: " << max << " Min: " << min << endl;
+    	
+    	// TAKE BACK
+    	_board->takeBack();
+    	
+    	// Finishing the evaluation of tree node
+    	finishedNode(0,&m);
+	    }
+	    else
+    	{
+	    	finishedNode(0,&m);
+	    }
+    }//while ends
+
+	int k = 0;
+	int NumTask = _sc->getNumTask();
+      for( k=1; k< NumTask; k++ )
+      {
+	int value1;
+	short field1;
+	unsigned char direction1;
+	int type1;
+	MPI_Status stat;
+	int NoEvaluations;
+
+        // Receive moves
+	MPI_Recv( &value1, 1, MPI_INT, k,10,MPI_COMM_WORLD, &stat);
+	MPI_Recv( &field1, 1, MPI_SHORT, k,10,MPI_COMM_WORLD, &stat); 
+	MPI_Recv( &direction1, 1, MPI_UNSIGNED_CHAR, k,10,MPI_COMM_WORLD, &stat);
+	MPI_Recv( &type1, 1, MPI_INT, k,10,MPI_COMM_WORLD, &stat);	
+	MPI_Recv( &NoEvaluations, 1, MPI_INT, k,10,MPI_COMM_WORLD, &stat);
+
+	_ev->addNoEval( NoEvaluations );
+
+    // Choose the best move
+	if( CurrentColor == _board->color1 ) // O, black
+	{
+	  if( value1 > value )
+	  {
+	     Move::MoveType t = (Move::MoveType)type1;
+	     Move m1( field1, direction1, t );
+	     foundBestMove(0, m1, value1);
+	  }
+	}
+	else // X, red
+	{
+	  if( value1 < value )
+	  {
+	     Move::MoveType t = (Move::MoveType)type1;
+	     Move m1( field1, direction1, t );
+	     foundBestMove(0, m1, value1);
+	  }
+	}
+      }
+
+    }
+    else
+    {
+        char boardLayout[500];
+        int value = 0;
+        long min = 20000;
+        long max = -20000;
+        int currentDepth = 0;
+        int NoMoves= 0;
+        MPI_Status stat;
+
+    while(1)// new search
+    {
+        // Receive board
+        MPI_Recv( boardLayout, 500, MPI_CHAR, 0, 10, MPI_COMM_WORLD, &stat );
+
+        if( strncmp( boardLayout, "exit", 4 ) == 0)
+        {
+            break;
+        }
+
+        // Update board
+        _board->setState( boardLayout );
+        int CurrentColor = _board->actColor(); // stored own color
+        Move m;
+        MoveList list;
+
+        // Generate All Moves
+        // generate list of allowed moves, put them into <list>
+        generateMoves(list);
+
+    // loop over all moves
+    while(list.getNext(m)) 
+    {
+    	if( print )
+    	cout << "Move: " << m.name();
+ 
+    	NoMoves++;
+        if( NoMoves % _sc->getNumTask() == _sc->getRank() )	
+        {	   
+
+        // Below code executes only for specific ranks
+
+    	// PLAY MOVE
+    	_board->playMove(m);
+    	
+    	value = minimax(currentDepth);
+    	
+    	if( print )
+    	cout << " Value: " << value;
+    	
+    	if( CurrentColor == _board->color1 ) // Assuming, O, Blck, max
+    	{
+    		if( value > max )
+    		{
+    			if( print )
+    			cout << "Color: " << CurrentColor << "-Maximising" << endl;
+    			max = value;
+			    m.value = value;
+    			foundBestMove(0, m, value);
+    		}    			
+    	}
+    	else // Assuming X, Red
+    	{
+    		if( value < min )
+			{
+    			if( print )
+				cout << "Color: " << CurrentColor << "-Minimising" << endl;
+				min = value;
+				m.value = value;
+				foundBestMove(0, m, value);
+			}    	
+    	}
+    	
+    	if( print )
+    	cout << " Max: " << max << " Min: " << min << endl;
+    	
+    	// TAKE BACK
+    	_board->takeBack();
+    	
+    	// Finishing the evaluation of tree node
+    	finishedNode(0,&m);
+	    }
+	    else
+    	{
+	    	finishedNode(0,&m);
+	    }
+      }//while ends
+
+        // send best move
+	MPI_Send(&_bestMove.value,1, MPI_INT,0, 10, MPI_COMM_WORLD ); // value
+	MPI_Send(&_bestMove.field,1, MPI_SHORT,0, 10, MPI_COMM_WORLD ); //field
+	MPI_Send(&_bestMove.direction,1, MPI_UNSIGNED_CHAR,0, 10, MPI_COMM_WORLD );// direction
+	MPI_Send(&_bestMove.type,1, MPI_INT,0, 10, MPI_COMM_WORLD ); // TYPE-INT
+
+	int NoEvaluations = _ev->getNoEval();
+
+	// send No of eval
+	MPI_Send(&NoEvaluations ,1, MPI_INT,0, 10, MPI_COMM_WORLD ); // value
+
+     }
+    }
 
 
 
