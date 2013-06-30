@@ -2,6 +2,8 @@
  * EvalScheme and Evaluator
  */
 
+#include <iostream>
+using namespace std;
 #include "eval.h"
 
 
@@ -94,6 +96,7 @@ int Evaluator::fieldValue[61];
 
 Evaluator::Evaluator()
 {
+    cout << "Setting EVALUATION TO 0" << endl;
     NoEval =0;
     _evalScheme = 0;
 }

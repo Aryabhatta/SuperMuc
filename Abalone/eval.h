@@ -83,11 +83,12 @@ class Evaluator
 
     void setBoard(Board*);
 
+    void resetEval(){NoEval=0;}
     int getNoEval(){return NoEval;}
     void incrementNoEval(){NoEval++;}
     void addNoEval( int No )
     {
- 	NoEval += No;
+     	NoEval += No;
 //	printf("\n%d evaluations added, total evaluations = %d\n", No, NoEval);
     }
 

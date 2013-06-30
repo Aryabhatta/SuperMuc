@@ -52,8 +52,6 @@ int lport = 23412;
 bool changeEval = true;
 
 
-
-
 /**
  * MyDomain
  *
@@ -83,9 +81,8 @@ void MyDomain::sendBoard()
 void MyDomain::received(char* str)
 {
     static double Tottime=0;
-    static long TotNoEval=0;
+    long TotNoEval=0;
 
-	//printf("\n %s", str);
     if (strncmp(str, "quit", 4)==0) {
 	l.exit();
 	return;
@@ -101,26 +98,34 @@ void MyDomain::received(char* str)
 
     int state = b.validState();
     int len;
+    int NumTask, i;
+    MPI_Comm_size( MPI_COMM_WORLD, &NumTask);
+
     if ((state != Board::valid1) && 
 	(state != Board::valid2)) {
 	printf("%s\n", Board::stateDescription(state));
-	switch(state) {
+
+	switch(state) 
+    {
 	    case Board::timeout1:
 	    case Board::timeout2:
 	    case Board::win1:
 	    case Board::win2:
-
-        char boardLayout[500];
-        // Send Exit Signal to slave
-        len = sprintf(boardLayout, "exit%s\n",b.getState());
-        MPI_Send( boardLayout, 500, MPI_CHAR, 1, 10, MPI_COMM_WORLD );
-
+    
+            char boardLayout[500];
+            // Send Exit Signal to slave through EXIT board
+            len = sprintf(boardLayout, "exit%s\n",b.getState());
+            for( i = 1; i< NumTask; i++)
+            {
+                MPI_Send( boardLayout, 500, MPI_CHAR, i, 10, MPI_COMM_WORLD );
+            }
 
         	printf("\nTotal run time for player ");
 	    	printf("%s ", (myColor == Board::color1) ? "O":"X");
         	printf(" =  %lf\n", (Tottime/1000));
 	        printf("Evaluations per sec = %lf \n", (TotNoEval*1000/Tottime));
-		l.exit();
+            printf("Total Evaluations= %ld\n", TotNoEval);
+		    l.exit();
 	    default:
 		break;
 	}
@@ -155,7 +160,7 @@ void MyDomain::received(char* str)
 	    ev.changeEvaluation();
     
     // Sum up evaluations
-    TotNoEval += ev.getNoEval();
+    TotNoEval =  ev.getNoEval();
 
 	/* stop player at win position */
 	int state = b.validState();
@@ -168,15 +173,19 @@ void MyDomain::received(char* str)
 		case Board::win1:
 		case Board::win2:
 
-        char boardLayout[500];
-        // Send Exit Signal to slave
-        len = sprintf(boardLayout, "exit%s\n",b.getState());
-        MPI_Send( boardLayout, 500, MPI_CHAR, 1, 10, MPI_COMM_WORLD );
+            char boardLayout[500];
+            // Send Exit Signal to slave through EXIT board
+            len = sprintf(boardLayout, "exit%s\n",b.getState());
+            for( i = 1; i< NumTask; i++)
+            {
+                MPI_Send( boardLayout, 500, MPI_CHAR, i, 10, MPI_COMM_WORLD );
+            }
 
 	        printf("\nTotal run time for player ");
-		printf("%s ", (myColor == Board::color1) ? "O":"X");
+    		printf("%s ", (myColor == Board::color1) ? "O":"X");
 	        printf(" =  %lf\n", (Tottime/1000));
         	printf("Evaluations per sec = %lf \n", (TotNoEval*1000/Tottime));
+            printf("Total Evaluations= %ld\n", TotNoEval);
 		    l.exit();
 		default:
 		    break;
@@ -272,10 +281,7 @@ void parseArgs(int argc, char* argv[])
 	if ((strcmp(argv[arg],"-p")==0) && (arg+1<argc)) {
 	    arg++;
 
-        host = "localhost";
-        int p =  atoi(argv[arg]);
-        rport = p;
-/*	    if (argv[arg][0]>'0' && argv[arg][0]<='9') {
+	    if (argv[arg][0]>'0' && argv[arg][0]<='9') {
 		lport = atoi(argv[arg]);
 		continue;
 	    }
@@ -286,7 +292,7 @@ void parseArgs(int argc, char* argv[])
 		p = atoi(c+1);
 	    }
 	    host = argv[arg];
-	    if (p) rport = p;*/
+	    if (p) rport = p;
 	    continue;
 	}
 	
@@ -321,15 +327,19 @@ int main(int argc, char* argv[])
     SearchStrategy* ss = SearchStrategy::create(strategyNo);
 
     if (verbose)
-    	printf("Using strategy '%s' ...\n", ss->name());
+   	printf("Using strategy '%s' ...\n", ss->name());
+
     ss->setMaxDepth(maxDepth);
 
     b.setSearchStrategy( ss );
     ss->setEvaluator(&ev);
+
     if( verbose )
-      printf("\nIn main, rank = %d\n", rank);
+    printf("\nIn main, rank = %d\n", rank);
+
     ss->registerCallbacks(new SearchCallbacks(verbose, NumTask, rank));
 
+    // Only rank 0 opens port & communicates
     if( rank == 0 )
     {
         printf("\nStarting, rank = %d\n", rank);
@@ -339,7 +349,7 @@ int main(int argc, char* argv[])
         l.install(&d);
 	    l.run();
     }
-    else
+    else // others wait for signal from Master - rank 0
     {
     	printf("\nRank %d executing wait\n", rank);
         ss->setBoard( &b );
@@ -347,4 +357,6 @@ int main(int argc, char* argv[])
     }
 
     MPI_Finalize();
+
+    printf("\n Rank %d exiting from Main \n", rank );
 }
