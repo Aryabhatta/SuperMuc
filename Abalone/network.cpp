@@ -457,10 +457,10 @@ void NetworkDomain::gotConnection()
 
   if (strncmp(tmp,"reg ",4)==0) {
     int port = atoi(tmp+4);
-//    sin.sin_port = htons( port );
+    sin.sin_port = htons( port );
 
     // Explicitly setting port no = default port used by referee
-    sin.sin_port = htons( 23412 );
+//    sin.sin_port = htons( 23412 );
     Connection *c = getNewConnection(0, sin);
     c->reachable = true;
 

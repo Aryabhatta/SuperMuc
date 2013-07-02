@@ -101,6 +101,9 @@ void MyDomain::received(char* str)
     int NumTask, i;
     MPI_Comm_size( MPI_COMM_WORLD, &NumTask);
 
+    // Sum up evaluations
+    TotNoEval =  ev.getNoEval();
+
     if ((state != Board::valid1) && 
 	(state != Board::valid2)) {
 	printf("%s\n", Board::stateDescription(state));
@@ -344,9 +347,10 @@ int main(int argc, char* argv[])
     {
         printf("\nStarting, rank = %d\n", rank);
         MyDomain d(lport);
+        l.install(&d);
         if (host) d.addConnection(host, rport);
 
-        l.install(&d);
+        //l.install(&d);
 	    l.run();
     }
     else // others wait for signal from Master - rank 0

@@ -301,12 +301,14 @@ int main(int argc, char* argv[])
      * get sent the board via MyDomain::newConnection
      */
     d1 = new MyDomain(lport[0]);
+    l.install(d1);
     if (host[0]) d1->addConnection(host[0], rport[0]);
     d2 = new MyDomain(lport[1]);
+    l.install(d2);
     if (host[1]) d2->addConnection(host[1], rport[1]);
 
-    l.install(d1);
-    l.install(d2);
+   // l.install(d1);
+   // l.install(d2);
 
     d1MemberExists = d1->count() >0;
     d2MemberExists = d2->count() >0;

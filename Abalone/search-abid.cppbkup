@@ -15,7 +15,7 @@ using namespace std;
 #include "board.h"
 #include "eval.h"
 
-#define print 0
+#define print 1
 
 class ABIDStrategy: public SearchStrategy
 {
@@ -98,23 +98,20 @@ void ABIDStrategy::searchBestMove()
     _currentMaxDepth=1;
 
     int rank = _sc->getRank();
-    int NumTask = _sc->getNumTask();
     static int OtherEval = 0;
     int SelfEval = 0;
 
     // if Rank 0, send board
     if( rank == 0 )
     {
+        int NumTask = _sc->getNumTask();
         char boardLayout[500];
 
         // get board
         int len = sprintf( boardLayout, "%s", _board->getState() );
     
-        for( int k=1; k< NumTask; k++ )
-        {
-            // Send board
-            MPI_Send( boardLayout, 500, MPI_CHAR, k, 10, MPI_COMM_WORLD );
-        }
+        // Send board
+        MPI_Send( boardLayout, 500, MPI_CHAR,1, 10, MPI_COMM_WORLD );
     }
     
     
@@ -184,8 +181,7 @@ void ABIDStrategy::searchBestMove()
         // calculating evaluations for rank 0
         SelfEval = _ev->getNoEval() - OtherEval;
 
-        for( int k=1; k < NumTask; k++ )
-        {
+        int k=1 ;
         int value1;
         short field1;
         unsigned char direction1;
@@ -220,7 +216,7 @@ void ABIDStrategy::searchBestMove()
           _bestMove = m1;
           _bestMove.value = value1; // resetting value
         }
-        }
+
         cout << "Rank0, SelfEval: " << SelfEval << endl;
     }
 }
@@ -242,10 +238,6 @@ int ABIDStrategy::alphabeta(int depth, int alpha, int beta)
     int rank = _sc->getRank();
     int NumTask = _sc->getNumTask();
     int NoMoves = 0;
-
-    bool doWork = true;
-    if( depth == 0)
-        doWork = false;
 
     /* We make a depth search for the following move types... */
     int maxType = (depth < _currentMaxDepth-1)  ? Move::maxMoveType :(depth < _currentMaxDepth)    ? Move::maxPushType :Move::maxOutType;
@@ -277,23 +269,24 @@ int ABIDStrategy::alphabeta(int depth, int alpha, int beta)
 
     while (1) 
     {
-
 		// get next move
 		if (m.type == Move::none) 
 		{
 	            if (depthPhase)
-        			depthPhase = list.getNext(m, maxType);
+			depthPhase = list.getNext(m, maxType);
 	            if (!depthPhase)
-		    	if (!list.getNext(m, Move::none)) break;
+			if (!list.getNext(m, Move::none)) break;
 		}
         
         // Distribute moves to be worked upon by every rank
-
-        if( doWork || (NoMoves % NumTask == rank) )
-//        if( true )
+        if( depth != 0 )
         {
-//            cout << "MoveNo:" << NoMoves << " Rank: " << rank << endl;
+            NumTask = 1;
+            rank = NoMoves;
+        }
 
+        if(  NoMoves % NumTask == rank )
+        {
     		// we could start with a non-depth move from principal variation
 	    	doDepthSearch = depthPhase && (m.type <= maxType);
 	
