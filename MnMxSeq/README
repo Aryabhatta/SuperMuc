@@ -1,0 +1,163 @@
+Sequentieller Computerspieler fuer Abalone
+==========================================
+
+
+Abalone ist ein Brettspiel der Kategorie "2-Personen-Nullsummen-Spiel
+mit vollstaendiger Information." Dabei bedeutet "Nullsummen-Spiel",
+dass der Vorteil des einen Spielers der Nachteil des anderen ist, und
+"Vollstaendige Information", dass es keine Zufallskomponente gibt.
+Die Regeln gibt es unter
+
+  http://uk.abalonegames.com/rules/basic_rules/official_rules.html
+
+und eine GUI-Version fuer Linux gibt es bei den KDE3 Spielen
+("Kenolaba"). Der "Netwerk-Modus" dieser GUI benutzt denselben
+Kommunikationsbus (siehe unten) wie die Programme hier.
+
+
+Technische Beschreibung
+========================
+
+
+Die Kommunikation zwischen den Spielern basiert auf dem Austausch von
+Spielpositionen auf einem Kommunikationsbus, an den sich mehrere
+Prozesse anschliessen koennen. Auf dem Bus versandte Spielpositionen
+werden an alle angeschlossenen Prozesse weitergeleitet.
+Ein Kommunikationsbus wird identifiziert ueber eine Nummer und einen
+Rechnernamen, auf dem der Kommunikationsbus existiert (die Implementierung
+benutzt fuer den Kommunikationsbus einen TCP-Port auf dem Rechner, der
+frei sein muss; Standard-Busnummer ist 23412).
+
+Bei den folgenden Programmen laesst sich der Kommunikationsbus mit
+Parameter "-p" angeben. Debuginformationen werden mit "-v" oder "-vv"
+(mehr) ausgegeben. Hilfe zu Kommandozeilenoptionen mit "-h".
+Teil der Spielposition ist uebrigens die Zugnummer und eine globale Zeit
+bis zum erzwungenen Ende der Partie in Sekunden (wichtig fuer den
+Turniermodus bei Benutzung eines Schiedsrichters - siehe unten).
+
+
+Programm "player"
+-----------------
+
+Dies ist ein Computerspieler, der eine vorgegebene Farbe spielt, die man
+optional als Argument übergibt. Farben sind entweder "X" oder "O" (Standard).
+Farbe X spielt z.B. das Kommando "player X". Eine Spielstärke als Zahl kann
+in der Kommandozeile als zweites Argument angegeben werden. Wie dieser
+Wert genutzt wird, hängt von der im Computerspieler genutzten Strategie
+ab; bei Spiel auf Zeit beispielsweise ist eine Spielstärke ohne Bedeutung.
+Der Computerspieler schliesst sich einem Kommunikationsbus an
+(Standardbus: "localhost:23412"), und wartet auf Spielpositionen.
+Bekommt er eine Position, in der er spielen soll, berechnet er den besten
+Zug und schickt die resultierende Spielposition an den Bus zurueck.
+
+
+Programm "start"
+----------------
+
+Dieses Programm startet Spiele, beobachtet sie, und beendet sich, wenn
+ein Spieler gewonnen hat. Allerdings kann es keinen Einfluss darauf nehmen,
+wenn ein Spieler betruegt, d.h. Spielpositionen verschickt, die er gar
+nicht erreichen kann, oder bei einem Spiel auf Zeit die verfügbaren
+Zeiten falsch abändert. Gibt man einen Dateinamen als Argument an,
+startet das Spiel an der in der Datei vorgegebenen Position.
+
+
+Programm "referee" ("Schiedsrichter")
+-------------------------------------
+
+Dies hat dieselbe Funktion wie "start", kann aber als Schiedsrichter ein Spiel
+überwachen, indem er das Spiel zwischen 2 Kommunikationsbussen vermittelt.
+Dazu muss auf dem einen Bus ein Spieler fuer "O", und auf dem anderen ein
+Spieler fuer "X" sitzen.
+Der Schiedsrichter verschickt die Startposition (bzw. Position aus einer
+gegebenen Datei) an beide Busse und wartet auf neue Positionen, die er
+nur dann weitergibt an den anderen Bus, wenn sie sich durch einen
+gültigen Zug ergeben. Dabei gibt der Schiedsrichter allein die Zeit vor
+(seit Start des Spiels oder wie in der Datei vorgegeben). Der Schiedsrichter
+entscheidet auch, wann ein Spieler wegen Zeitueberschreitung vorloren hat.
+
+
+
+Aufrufbeispiele
+================
+
+Kompilieren mit "make".
+
+
+
+Ohne Schiedsrichter:
+ player O &
+ player X &
+ start
+
+Mit Schiedsrichter:
+ player -p 3000 O &
+ player -p 4000 X &
+ referee -p 3000 -p 4000
+
+Die Startreihenfolge ist jeweils egal, da "start" and "referee" die
+aktuelle Position an neue Teilnehmer im Kommunikationsbus
+verschicken. Damit kann man Teilnehmer jederzeit abschiessen ('kill'en) und
+neustarten: Sie klinken sich automatisch wieder ein.
+
+Bei einem Spiel auf Zeit startet der Schiedsrichter,
+sobald ein einziger (!) weiterer Teilnehmer existiert.
+
+
+Beispiel fuer Netwerkspiel mit Tunneln
+======================================
+
+Auf Rechner "comp1" soll Spieler O laufen, wird sind auf "mycomp".
+Zwischen mycomp und comp1 ist eine Firewall, die nur SSH erlaubt.
+Auf mycomp soll Spieler X und ein Beobachter/Starter laufen.
+
+Zum Verständnis ist es wichtig zu wissen, dass ein "Kommunikationsbus"
+aus Punkt-zu-Punkt TCP-Verbindungen zwischen allen Teilnehmern eines
+Busses bestehen, wobei jeweils der nächstfreie TCP-Port benutzt wird.
+Beim Start eines Teilnehmers belegt er einen eingehenden Port (LISTEN),
+der der Kanalnummer oder einer nächsthöhrem unbelegten Port entspricht.
+Da ein Spieler auf dem entfernten "comp1" laufen soll, starten wir
+SSH mit einem lokalen Forward auf den entfernten Rechner. Für lokale
+Teilnehmer scheint damit der entfernte Teilnehmer lokal zu existieren.
+Da die 2 lokalen Teilnehmer vom entfernten Rechner aus erreichbar
+sein müssen, müssen 2 weitere Tunnel vom entfernten Rechner auf den
+lokalen Rechner eingerichtet werden ("remote forwards").  
+
+Einloggen auf comp1 (z.B. Kommunikationskanal 5000):
+
+ssh -L 5000:localhost:5000 -R 5001:localhost:5001 -R 5002:localhost:5002 comp1
+comp1> ./player -p 5000 O
+mycomp>./player -p 5000 X &
+mycomp>./start -p 5000
+
+
+
+Implementierung einer eigenen Suchstrategie
+===========================================
+
+Der Code ist in relativ einfachem C++ geschrieben. Für ein zur
+Implementierung einer eigenen Suchstratie ausreichendes Verständnisses
+des Codes sollte es genügen, sich die in "search-onelevel.cpp" implementierte
+Strategie genau anzuschauen. Dieser Code ist dazu ausführlich
+dokumentiert, und zeigt, welche Schritte für eine eigene Suchstrategie
+vorgenommen werden müssen. 
+
+Für eine neue sequentielle Strategie (oder Parallelisierung mit OpenMP)
+reicht es aus, diese Datei als Vorlage zu nehmen. Bei Parallelisierung
+mit MPI muss main() so abgeändert werden, dass "Rank 0" den bisherigen
+Code darin ausführt, und jeder andere MPI-Task in eine zu implementierende
+Funktion springt, die auf Anfragen von Rank 0 wartet (Master-Slave).
+
+"search-onelevel.cpp" ist ein Beispiel einer einfachen Suchstrategie
+mit einer Vorausschau von einem Zug. Im Gegensatz zu dieser einfachen
+Strategie sollte immer eine einstellbare Suchstärke
+berücksichtigt werden, die als "_maxDepth" in SearchStrategy
+erreichbar ist, und über den Kommandozeilenparameter definiert wird.
+Beispiel einer komplexen Suchstrategie (Alpha-Beta mit
+Tiefensuche: "Alpha/Beta with Iterative Deepening") ist in
+search-abid.cpp zu finden.
+
+Die Auswahl einer Suchstrategie erfolgt mit "player -s <Nummer> ...",
+wobei die Zuordnung zwischen der Nummer einer Strategie und ihrem
+Namen in der Hilfe angegeben wird, erreichbar über "player -h".
+

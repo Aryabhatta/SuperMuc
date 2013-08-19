@@ -1,0 +1,92 @@
+<h1>Aufgabe 5: Parallelisierung Spielsuche</h2>
+<h2>Am Beispiel des Brettspiels Abalone<br>
+HPC-Praktikum SS07</h2>
+<P>
+
+
+<h3>1. Minimax</h3>
+
+Zur Einarbeitung in die f&uuml;r die sp&auml;tere Parallelisierung
+ben&ouml;tigten Codeteile soll zun&auml;chst eine sequentielle
+Minimax-Suchestrategie entwickelt werden. 
+Implementieren sie die Minimax-Suchestrategie f&uuml;r Abalone in einer
+Klasse MinimaxStrategy mit OneLevelStrategy als Vorlage und
+SearchStrategy::_maxDepth als Tiefe, bis zu der Minimax suchen soll;
+Aufrufbeispiele und Details zum Code sind in der README-Datei zum Code
+zu finden.
+<P>
+Welche Leistung (Einheit "Bewertete Stellungen pro Sekunde") erreichen Sie
+bei Nutzung "bester" Compileroptionen auf der Altix
+bei verschiedenen Maximal-Suchtiefen (2,3,4,5) bezogen auf
+<UL>
+<LI>die Anfangsposition des Spiels
+<LI>die Position in "position-midgame1"
+<LI>"position-midgame2" und
+<LI>"position-endgame"?
+</UL>
+Notieren sie sich auch die absolute Anzahl durchgef&uuml;hrter Bewertungen.
+Hinweis: "Bewertungen/s" gibt "player -v ..." aus.
+
+<h3>2. Parallelisierung Minimax</h3>
+
+Parallelisieren Sie die Minimaxsuche entweder mit OpenMP
+(eventuell mit Workqueuing-Konstrukten; siehe Manual des Intel
+Compilers) oder MPI
+mit einer geeigneten Parallelisierungsstrategie
+(f&uuml;r MPI m&uuml;ssen Sie player.c:main() entsprechend ab&auml;ndern).
+<P>
+Welchen Speedup
+bekommen Sie f&uuml;r die in (1) beschriebenen Parameter, also bezogen
+auf der Performance-Wert "Bewertungen/s" f&uuml;r 2,4,6,8 Prozessoren?
+Wann kann der erreichbare Speedup von der aktuellen Stellung abh&auml;ngen?
+
+<P>
+Hinweis:<UL>
+<LI>&Uuml;berlegen Sie, welche Variablen bei der Parallelisierung mit
+OpenMP als privat deklariert werden m&uuml;ssen. Dazu geh&ouml;ren
+bei C++ auch Objekte, die in jedem Thread privat vorhanden sein
+m&uuml;ssen, damit sich die Threads keine Daten &uuml;berschreiben
+(z.B. das Objekt f&uuml;r die Spielposition).
+</UL>
+
+<h3>3. Einfache Parallelisierung Alpha-Beta </h3>
+
+Der vorgegebene Alpha-Beta-Alogrithmus (ABID) l&auml;sst unn&ouml;tige
+Bewertungen aus. Um wieviel Prozent sinkt die absolute Anzahl
+bewerteter Stellungen in den in Teilaufgabe (1) notierten F&auml;llen?
+<P>
+Was w&auml;re eine einfache Parallelisierung des Alpha-Beta-Algorithmus?
+Implementieren Sie Ihre einfache Strategie. Der Suchparallelisierungs-Overhead
+ist der Prozentsatz an unn&ouml;tig durchgef&uuml;hrten Bewertungen. Wie hoch
+ist dieser Overhead in ihrer einfachen Strategie bei 2,3,4,6 Prozessoren und
+den in Teilaufgabe (1) vorgegebenen Stellungen?
+Welche Probleme hat die Parallelisierung ausserdem? Hinweise kann eine
+Speedup-Kurve geben (und bei MPI-Code der Traceanalyzer!).
+
+
+<h3>4. Effiziente Parallelisierung Alpha-Beta</h3>
+
+Um zu einer besseren Parallelisierung zu gelangen, ist eine gut ausbalancierte
+Partitionierung des erwarteten Berechnungsaufwandes wichtig. Man kann davon
+ausgehen, dass der Alpha-Beta Suchbaum mit passender Heuristik der minimalen
+Form sehr nahe kommt. Wie sieht diese aus?
+<I>F&uuml;ndig wird man in "Lu: Parallel
+Search of Narrow Game Trees", siehe HPC-Webseite</I>. In der Arbeit sind
+auch Parallelisierungsstrategien beschrieben.
+Eine wichtige Strategie ist
+PVSplit, die in einem minimalen Alpha-Beta-Suchbaum die Kinder der sogenannten
+ALL-Knoten in einer Tiefensuche parallel behandelt.
+Implementieren Sie PVSplit in OpenMP oder MPI f&uuml;r Abalone.
+Geben Sie entsprechend zu Aufgabe 3 Speedupwerte f&uuml;r ihre
+Parallelisierung von PVSplit an.
+
+
+<P>
+Hinweise:<UL>
+<LI>Bei Nutzung von OpenMP sollten Sie hier Workqueuing-Konstrukte
+einsetzen
+<LI>Welche Bedingung und Codestelle bezeichnet einen ALL-Knoten in PVSplit?
+Genau an diesen Stellen muss parallelisiert werden. 
+</UL>
+
+
