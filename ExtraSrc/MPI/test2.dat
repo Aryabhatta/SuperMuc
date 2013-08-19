@@ -1,0 +1,8 @@
+0      # iterations
+100    # initial resolution
+100    # max resolution (spatial resolution)
+200    # resolution step size
+1      # Algorithm 0=Jacobi 1=Gauss 
+2                     # number of heat sources
+0.0  0.0  1.0  1.0    # (x,y), size temperature
+1.0  1.0  1.0  0.5 

@@ -1,0 +1,16 @@
+#!/bin/bash
+#@ wall_clock_limit = 00:4:00
+#@ job_name = heat
+#@ job_type = parallel
+#@ class = test
+#@ network.MPI = sn_all,not_shared,us
+#@ output = job$(jobid).out
+#@ error = job$(jobid).out
+#@ energy_policy_tag = NONE
+#@ node = 1
+#@ total_tasks = 1 
+#@ node_usage = not_shared
+#@ queue
+. /etc/profile
+cd ~/heat1
+poe heat test.dat

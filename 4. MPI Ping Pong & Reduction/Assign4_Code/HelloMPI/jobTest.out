@@ -1,0 +1,10 @@
+
+DISK GROUP QUOTAS for home and project file systems:
+Filesystem                                 Quota     Used Space     Free Space
+/home/hpc/pr85ni          ($HOME)        102.4GB   20.1GB (20%)   82.3GB (80%)
+/gpfs/work/pr85ni         ($WORK)          4.4TB   11.0MB ( 0%)    4.4TB (100%)
+-------------------------------------------------------------------------------
+
+Executing LRZ User Prolog ...
+
+Hello World! Processor 5
